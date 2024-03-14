@@ -1,5 +1,5 @@
 {
-  "SERVER_URL": "https://app.lfe.avniproject.org",
+  "SERVER_URL": "https://teachtool.gyaancenter.com",
   "ENV": "ext-dev",
   "DISABLE_AUTO_SYNC": true
 }
