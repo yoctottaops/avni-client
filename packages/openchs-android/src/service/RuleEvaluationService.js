@@ -717,13 +717,15 @@ class RuleEvaluationService extends BaseService {
     executeDashboardCardRule(reportCard, ruleInput) {
         try {
             const ruleFunc = eval(reportCard.query);
+            General.logDebug("RuleEvaluationService", `Executing rule for report card: ${reportCard.name} with query: ${reportCard.query}`)
+
             const result = ruleFunc({
-                params: _.merge({db: this.db, ruleInput: ruleInput}, this.getCommonParams()()),
+                params: _.merge({db: this.db, ruleInput: ruleInput}, this.getCommonParams()),
                 imports: getImports()
             });
             return result;
         } catch (error) {
-            General.logError("Rule-Failure", `DashboardCard report card rule failed for uuid: ${reportCard.uuid}, name: ${reportCard.name}`);
+            General.logError("Rule-Failure", `DashboardCard report card rule failed for uuid: ${reportCard.uuid}, name: ${reportCard.name}, reportCard: ${reportCard.query}, ruleFunc: ${typeof ruleFunc}`);
             General.logError("Rule-Failure", error);
             this.saveFailedRules(error, reportCard.uuid, '',
                 'ReportCard', reportCard.uuid, null, null);
