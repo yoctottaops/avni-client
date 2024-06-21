@@ -90,11 +90,9 @@ class SubjectDashboardProgramsTab extends AbstractComponent {
     }
 
     getHeaderMessage(enrolment) {
-        const createdBy = this.getService(UserInfoService).getCreatedBy(enrolment, this.I18n);
-        const createdByMessage = _.isNil(createdBy) ? "" : this.I18n.t("by", {user: createdBy});
         return (
             <View>
-                <Text>{`${this.I18n.t("enrolledOn")} ${General.toDisplayDate(enrolment.enrolmentDateTime)}. ${createdByMessage}`}</Text>
+                <Text>{`${this.I18n.t("enrolledOn")} ${General.toDisplayDate(enrolment.enrolmentDateTime)}.`}</Text>
                 {!_.isNil(this.state.enrolment.programExitDateTime) &&
                 <Text>{`${this.I18n.t("exitedOn")} ${moment(enrolment.programExitDateTime).format("DD-MM-YYYY")}`}</Text>}
                 <Text>{`${this.I18n.t("programName")} ${this.I18n.t(_.get(enrolment, 'program.displayName'))}`}</Text>

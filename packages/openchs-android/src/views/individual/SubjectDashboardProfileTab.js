@@ -298,8 +298,7 @@ class SubjectDashboardProfileTab extends AbstractComponent {
     renderProfile() {
         const formMappingService = this.getService(FormMappingService);
         const createdBy = this.getService(UserInfoService).getCreatedBy(this.state.individual, this.I18n);
-        const createdByMessage = _.isNil(createdBy) ? "" : this.I18n.t("by", {user: createdBy});
-
+        
         const editProfileCriteria = `privilege.name = '${Privilege.privilegeName.editSubject}' AND privilege.entityType = '${Privilege.privilegeEntityType.subject}' AND subjectTypeUuid = '${this.state.individual.subjectType.uuid}'`;
         const voidProfileCriteria = `privilege.name = '${Privilege.privilegeName.voidSubject}' AND privilege.entityType = '${Privilege.privilegeEntityType.subject}' AND subjectTypeUuid = '${this.state.individual.subjectType.uuid}'`;
         const hasEditPrivilege = this.privilegeService.hasActionPrivilegeForCriteria(editProfileCriteria, 'subjectTypeUuid');
@@ -311,7 +310,7 @@ class SubjectDashboardProfileTab extends AbstractComponent {
                         {this.I18n.t("registrationInformation")}
                     </Text>
                     <Text style={{fontSize: Fonts.Medium, color: Colors.DefaultPrimaryColor}}>
-                        {`${this.I18n.t("registeredOn")} ${General.toDisplayDate(this.state.individual.registrationDate)}. ${createdByMessage}`}
+                        {`${this.I18n.t("registeredOn")} ${General.toDisplayDate(this.state.individual.registrationDate)}. `}
                     </Text>
                 </View>
                 <View style={{right: 2, position: 'absolute', alignSelf: 'center'}}>

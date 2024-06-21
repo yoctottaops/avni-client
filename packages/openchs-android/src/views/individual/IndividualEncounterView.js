@@ -153,7 +153,7 @@ class IndividualEncounterView extends AbstractComponent {
         return (
             <CHSContainer>
                 <CHSContent>
-                    <ScrollView ref={this.scrollRef} keyboardShouldPersistTaps="handled">
+                    <ScrollView ref={this.scrollRef} keyboardShouldPersistTaps="handled" overScrollMode="never">
                     <AppHeader title={title} func={() => this.onAppHeaderBack()} displayHomePressWarning={true}/>
                     {displayTimer ?
                         <Timer timerState={this.state.timerState} onStartTimer={() => this.onStartTimer()} group={this.state.formElementGroup}/> : null}

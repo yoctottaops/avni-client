@@ -32,7 +32,7 @@ const fetchFactory = (endpoint, method = "GET", params, fetchWithoutTimeout) => 
     };
     const requestInit = {"method": method, ...params};
     const doFetch = getXSRFPromise(endpoint).then((xsrfToken) => {
-        requestInit.headers["X-XSRF-TOKEN"] = xsrfToken;
+        if(xsrfToken) requestInit.headers["X-XSRF-TOKEN"] = xsrfToken;
         return fetchWithoutTimeout ? fetch(endpoint, requestInit)
             : fetchWithTimeOut(endpoint, requestInit)
     });
@@ -40,7 +40,8 @@ const fetchFactory = (endpoint, method = "GET", params, fetchWithoutTimeout) => 
 };
 
 const getXSRFPromise = function (endpoint) {
-    return CookieManager.get(endpoint).then((cookies) => {
+    return CookieManager.get(endpoint, true).then((cookies) => {
+        General.logDebug('Cookies', JSON.stringify(cookies));
         const xsrfCookieObject = cookies["XSRF-TOKEN"];
         if (_.isNil(xsrfCookieObject)) {
             General.logDebug("requests",`getXSRFPromise: no XSRF cookie found when calling ${endpoint}`);

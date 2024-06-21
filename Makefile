@@ -376,6 +376,8 @@ run_app_debug: setup_hosts
 	cd packages/openchs-android/android && ./gradlew installDebug --stacktrace
 # </app>
 
+run_app_debug_lfe: setup_hosts
+	cd packages/openchs-android/android && ./gradlew installLfeDebug --stacktrace
 
 
 # <crash>

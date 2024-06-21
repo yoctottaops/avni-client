@@ -4,6 +4,7 @@ import Colors from './views/primitives/Colors';
 const App = require('./App').default;
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getJSON } from './framework/http/requests';
+import General from './utility/General';
 
 class ServerUrlConfiguration extends Component {
     constructor(props) {
@@ -34,6 +35,7 @@ class ServerUrlConfiguration extends Component {
             return getJSON(url + "/idp-details", true).then((idpDetails) => {
                 return true;
             }).catch((error) => {
+                General.logError("ServerUrlConfiguration", error);
                 return false;
             });
         }

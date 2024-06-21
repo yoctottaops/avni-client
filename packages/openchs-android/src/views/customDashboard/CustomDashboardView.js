@@ -4,7 +4,7 @@ import AppHeader from "../common/AppHeader";
 import React, {Fragment} from "react";
 import Reducers from "../../reducer";
 import {CustomDashboardActionNames as Actions} from "../../action/customDashboard/CustomDashboardActions";
-import {SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
+import {RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import _ from "lodash";
 import CustomDashboardTab from "./CustomDashboardTab";
 import {DashboardSection} from 'openchs-models';
@@ -68,11 +68,16 @@ class CustomDashboardView extends AbstractComponent {
             fontSize: Styles.normalTextSize
         }
     });
-
+    focusListener = null
     constructor(props, context) {
         super(props, context, Reducers.reducerKeys.customDashboard);
+        this.state = {
+            refreshing: false,
+        }
+        this.focusListener = null;
+        this.setstate = this.setState.bind(this);
     }
-
+   
     viewName() {
         return 'CustomDashboardView';
     }
@@ -88,17 +93,37 @@ class CustomDashboardView extends AbstractComponent {
         this.refreshCounts();
     }
 
-    refreshCounts() {
+    refreshCounts = () => {
+        this.setState({refreshing: true})
         this.dispatchAction(Actions.REMOVE_OLDER_COUNTS);
-        setTimeout(() => this.dispatchAction(Actions.REFRESH_COUNT), 500);
+        const that = this;
+        setTimeout(() => {this.dispatchAction(Actions.REFRESH_COUNT)
+        // .then(() => {
+            that.setState({refreshing: false})}
+    , 500);
     }
+
+    componentDidMount() {
+        if(super.componentDidMount) super.componentDidMount()
+            const that = this;
+        
+        // this.focusListener = this.props.navigation.addListener('focus', () => {
+        //   // your logic will go here
+        //   that.refreshCounts()
+        // });
+      }
+      componentWillUnmount() {
+        if(super.componentWillUnmount) super.componentWillUnmount()
+        // Remove the event listener
+        // this.focusListener?.remove();
+      }
 
     onDashboardNamePress(uuid) {
         this.dispatchAction(FilterActionNames.ON_LOAD, {dashboardUUID: uuid});
         this.dispatchAction(Actions.ON_DASHBOARD_CHANGE, {dashboardUUID: uuid});
         this.refreshCounts();
     }
-
+   
     renderDashboards() {
         return _.map(this.state.dashboards, dashboard =>
             <CustomDashboardTab
@@ -260,7 +285,7 @@ class CustomDashboardView extends AbstractComponent {
                         </View>
                     </View>}
                     <CustomActivityIndicator loading={loading}/>
-                    <ScrollView>
+                    <ScrollView refreshControl={<RefreshControl refreshing={this.state.refreshing} onRefresh={this.refreshCounts} />}>
                         {this.renderCards()}
                     </ScrollView>
                 </Fragment>

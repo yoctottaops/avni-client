@@ -9,7 +9,7 @@
     }
   },
   "lfe": {
-    "server_url": "https://teachtool.gyaancenter.com",
+    "server_url": "https://teachtool.schooledu.ap.gov.in",
     "package_name": "org.lfeteach.openchsclient",
     "prod_admin_password_env_var_name": "LFE_PROD_ADMIN_PASSWORD",
     "bugsnag": {

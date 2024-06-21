@@ -70,7 +70,6 @@ class ApprovalDetailsView extends AbstractComponent {
 
     renderEntityDate(entity, I18n) {
         const createdBy = this.getService(UserInfoService).getCreatedBy(entity, this.I18n);
-        const createdByMessage = _.isNil(createdBy) ? "" : I18n.t("by", {user: createdBy});
         const schemaToDatePropertyMap = {
             [Individual.schema.name]: {messageKey: I18n.t('registeredOn'), dateProperty: 'registrationDate'},
             [ProgramEnrolment.schema.name]: {messageKey: `${I18n.t('enrolmentDate')}: `, dateProperty: 'enrolmentDateTime'},
@@ -81,7 +80,7 @@ class ApprovalDetailsView extends AbstractComponent {
         const {messageKey, dateProperty} = schemaToDatePropertyMap[entity.getSchemaName()];
 
         return <Text
-            style={styles.entityDateStyle}>{`${I18n.t(messageKey)}: ${General.toDisplayDate(entity[dateProperty])} ${createdByMessage}`}</Text>;
+            style={styles.entityDateStyle}>{`${I18n.t(messageKey)}: ${General.toDisplayDate(entity[dateProperty])}`}</Text>;
     }
 
     renderEditButton(entity) {

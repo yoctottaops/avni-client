@@ -51,6 +51,9 @@ class AuthService extends BaseService {
             General.logDebug("AuthService", newSettings);
             this.settingsService.saveOrUpdate(newSettings);
             return newSettings;
+        }).catch((error) => {
+            General.logError("ServerUrlConfiguration", error);
+            throw error;
         });
     }
 

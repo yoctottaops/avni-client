@@ -86,7 +86,9 @@ class FormElementLabelWithDocumentation extends AbstractComponent {
                 </View>
                 {
                     this.state.expand &&
-                    <View style={{backgroundColor: Colors.GreyContentBackground}}>
+                    <View style={{backgroundColor: Colors.GreyContentBackground}}
+                        renderToHardwareTextureAndroid={false}
+                    >
                         <View style={{
                             backgroundColor: Colors.GreyContentBackground,
                             flexDirection: 'row',
@@ -113,8 +115,10 @@ class FormElementLabelWithDocumentation extends AbstractComponent {
                             style={{
                                 width: containerWidth,
                                 marginBottom: 16,
-                                paddingBottom: 8
+                                paddingBottom: 8,
+                                opacity: 0.99, overflow: 'hidden' 
                             }}
+                            // androidHardwareAccelerationDisabled={true}
                             source={{html: htmlToRender}}
                         />
                     </View>
