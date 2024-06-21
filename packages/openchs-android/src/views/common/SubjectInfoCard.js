@@ -13,6 +13,43 @@ import EncounterService from "../../service/EncounterService";
 import IndividualService from "../../service/IndividualService";
 import AddressLevelService from "../../service/AddressLevelService";
 
+const styles = {
+    subjectName: {
+        fontSize: Styles.normalTextSize,
+        fontStyle: 'normal',
+        fontWeight: 'bold',
+        color: Styles.blackColor,
+        lineHeight: Styles.smallTextSizeLineHeight
+    },
+    subjectSubtext1: {
+        fontSize: Styles.smallerTextSize,
+        fontStyle: 'normal',
+        color: Styles.blackish,
+        paddingRight: 8
+    },
+    subjectSubtext2: {
+        fontSize: Styles.smallerTextSize,
+        fontStyle: 'normal',
+        color: Styles.blackish,
+    },
+    subjectAddress: {
+        fontSize: Styles.smallerTextSize,
+        fontStyle: 'normal',
+        color: Styles.lightgrey,
+    },
+    enrolledProgram: {
+        fontSize: Styles.smallerTextSize,
+        fontStyle: 'normal',
+        color: Styles.whiteColor,
+    },
+    customSearchField: {
+        fontSize: Styles.smallerTextSize,
+        fontStyle: 'normal',
+        color: Styles.grey,
+        paddingRight: 8
+    }
+}
+
 class SubjectInfoCard extends AbstractComponent {
     static propTypes = {
         individual: PropTypes.object.isRequired,
@@ -31,14 +68,13 @@ class SubjectInfoCard extends AbstractComponent {
             <Text key={index} disabled
                   style={[{
                       height: 22,
-                      marginLeft: 4,
                       marginRight: 4,
                       borderRadius: 2,
                       paddingHorizontal: 4,
-                      marginVertical: 1,
+                      marginVertical: 2,
                       backgroundColor: program.colour,
                       color: Colors.TextOnPrimaryColor,
-                  }, Styles.userProfileProgramTitle]}
+                  }, styles.enrolledProgram]}
                   numberOfLines={1} ellipsizeMode='tail'>{this.I18n.t(program.displayName)}</Text>
         );
     }
@@ -47,12 +83,12 @@ class SubjectInfoCard extends AbstractComponent {
         return <View style={{
             flexDirection: 'row',
             justifyContent: 'flex-start',
-            alignItems: 'flex-start'
+            alignItems: 'center'
         }}>
             <Text
-                style={[{opacity: 0.6}, Styles.userProfileSubtext]}>{this.props.individual.userProfileSubtext1(i18n)}</Text>
+                style={styles.subjectSubtext1}>{this.props.individual.userProfileSubtext1(i18n)}</Text>
             <Text
-                style={[{opacity: 0.6}, Styles.userProfileSubtext]}>{this.props.individual.userProfileSubtext2(i18n)}</Text>
+                style={styles.subjectSubtext2}>{this.props.individual.userProfileSubtext2(i18n)}</Text>
         </View>
     }
 
@@ -69,12 +105,13 @@ class SubjectInfoCard extends AbstractComponent {
 
     render() {
         const i18n = this.I18n;
+        const {individual, hideEnrolments, renderDraftString} = this.props;
         const conceptService = this.getService(ConceptService);
-        const iconContainerStyle = {minHeight: 72, alignItems: 'center', justifyContent: 'center'};
-        const enrolledPrograms = _.filter(this.props.individual.nonVoidedEnrolments(), (enrolment) => enrolment.isActive)
+        const iconContainerStyle = {minHeight: 72, alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-start'};
+        const enrolledPrograms = _.filter(individual.nonVoidedEnrolments(), (enrolment) => enrolment.isActive)
             .map((x: ProgramEnrolment) => x.program);
 
-      const subjectAddressText = _.replace(this.props.individual.lowestTwoLevelAddress(i18n),new RegExp(",","g"),",\n");
+      const subjectAddressText = individual.lowestTwoLevelAddress(i18n);
         return (
             <View style={{
                 flexDirection: 'row',
@@ -82,57 +119,51 @@ class SubjectInfoCard extends AbstractComponent {
                 alignItems: 'center',
                 alignSelf: 'center',
                 minHeight: 72,
-                backgroundColor: Colors.cardBackgroundColor,
-                paddingHorizontal: 8
+                backgroundColor: Styles.greyBackground,
+                paddingHorizontal: 8,
+                paddingVertical: 2
             }}>
                 <SubjectProfilePicture
-                    size={24}
-                    subjectType={this.props.individual.subjectType}
-                    style={{marginRight: 8}}
+                    size={32}
+                    subjectType={individual.subjectType}
                     round={true}
-                    individual={this.props.individual}
+                    individual={individual}
                     containerStyle={iconContainerStyle}
                 />
                 <View
                     style={{
+                        marginLeft: 20,
                         flexDirection: 'column',
                         alignItems: 'flex-start',
                         flex: 1
                     }}>
-                    <Text style={Styles.textStyle}>
-                        {this.props.individual.nameString}
-                        {this.props.individual.voided &&
+                    <Text style={styles.subjectName}>
+                        {individual.getTranslatedNameString(this.I18n)}
+                        {individual.voided &&
                         <Text style={{color: Styles.redColor}}>
                             {` ${this.I18n.t("voidedLabel")}`}
                         </Text>
                         }
-                        {this.props.renderDraftString &&
+                        {renderDraftString &&
                         <Text style={{color: Styles.redColor}}>
                             {` (${this.I18n.t("draft")})`}
                         </Text>
                         }
                     </Text>
-                    {this.props.individual.isPerson() ? this.renderAgeAndGender(i18n) : null}
-                    {this.renderCustomSearchResultFields(i18n, conceptService)}
-                </View>
-                <View style={{
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'flex-end',
-                    flex: 1
-                }}>
-                    <View style={{justifyContent: 'flex-end'}}>
+                    {individual.isPerson() ? this.renderAgeAndGender(i18n) : null}
+                    <View style={{justifyContent: 'flex-start'}}>
                         <Text
-                            style={[{opacity: 0.6, textAlign: 'right'}, Styles.textStyle]}>{subjectAddressText}</Text>
+                            style={styles.subjectAddress}>{subjectAddressText}</Text>
                     </View>
-                    {!this.props.hideEnrolments &&
-                    <View style={{
-                        flexDirection: 'row',
-                        justifyContent: 'flex-end',
-                        flexWrap: 'wrap',
-                    }}>
-                        {_.uniqBy(enrolledPrograms, (x) => x.name).map((program, index) => this.renderProgram(program, index))}
-                    </View>}
+                    {this.renderCustomSearchResultFields(i18n, conceptService)}
+                        {!hideEnrolments &&
+                        <View style={{
+                            flexDirection: 'row',
+                            justifyContent: 'flex-start',
+                            flexWrap: 'wrap',
+                        }}>
+                            {_.uniqBy(enrolledPrograms, (x) => x.name).map((program, index) => this.renderProgram(program, index))}
+                        </View>}
                 </View>
             </View>
         );

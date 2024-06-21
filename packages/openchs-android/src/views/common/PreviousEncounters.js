@@ -144,9 +144,10 @@ class PreviousEncounters extends AbstractComponent {
             this.addDeleteDraftAction(encounter, this.I18n.t('delete'), Colors.ValidationError, actions);
         }
         this.addScheduledEncounterActions(encounter, this.I18n.t('do'), Colors.ScheduledVisitColor, actions, containsDrafts);
+        const canEditEncounter = !this.privilegeService.hasEverSyncedGroupPrivileges() || this.privilegeService.hasAllPrivileges() || _.includes(this.props.allowedEncounterTypeUuidsForPerformVisit, encounter.encounterType.uuid);
         return <View>
             <TouchableOpacity
-                onPress={() => !this.privilegeService.hasEverSyncedGroupPrivileges() || this.privilegeService.hasAllPrivileges() || _.includes(this.props.allowedEncounterTypeUuidsForPerformVisit, encounter.encounterType.uuid) ? this.editEncounter(encounter) : _.noop()}>
+                onPress={() => canEditEncounter ? this.editEncounter(encounter) : _.noop()}>
                 {containsDrafts && (<View style={{flexDirection: 'row', justifyContent: 'flex-end'}}>
                     {this.badge(this.I18n.t('draft'), Colors.WarningButtonColor)}
                 </View>)}
@@ -166,8 +167,10 @@ class PreviousEncounters extends AbstractComponent {
         const filledBy = this.getService(UserInfoService).getUserName(encounter.filledByUUID, encounter.filledBy, this.I18n);
         const visitName = `${_.isNil(encounter.name) ? this.I18n.t(encounter.encounterType.displayName) : this.I18n.t(encounter.name)}`;
         const primaryDate = encounter.encounterDateTime || encounter.cancelDateTime || encounter.earliestVisitDateTime;
-        const filledByMessage = _.isNil(filledBy) ? "" : `${this.I18n.t("by", {user: filledBy})}`;
-        const encounterDateMessage = `${General.toDisplayDate(primaryDate)} ${filledByMessage}`;
+        const filledByMessage = _.isNil(filledBy) ? `${General.toDisplayDate(primaryDate)}` : `${this.I18n.t("byOn", {
+            user: filledBy,
+            date: General.toDisplayDate(primaryDate)
+        })}`;
         const secondaryDate = !encounter.isScheduled() ? <Text style={{
                 fontSize: Fonts.Small,
                 color: Colors.SecondaryText
@@ -178,7 +181,7 @@ class PreviousEncounters extends AbstractComponent {
                 style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap'}}>
                 <View style={{flexDirection: 'column'}}>
                     <Text style={{fontSize: Fonts.Normal}}>{visitName}</Text>
-                    <Text style={{fontSize: Fonts.Small}}>{encounterDateMessage}</Text>
+                    <Text style={{fontSize: Fonts.Small, color: Colors.SecondaryText}}>{filledByMessage}</Text>
                     {secondaryDate}
                 </View>
                 {this.renderStatus(encounter)}
@@ -219,9 +222,9 @@ class PreviousEncounters extends AbstractComponent {
         }
         const dataSource = ListViewHelper.getDataSource(toDisplayEncounters);
         const renderable = (<View>
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <View style={{flexDirection: 'row', alignItems: 'center', backgroundColor: Styles.whiteColor}}>
                 {this.props.title && (
-                    <Text style={[Styles.cardTitle, {padding: Distances.ScaledContentDistanceFromEdge}]}>
+                    <Text style={[Styles.dashboardSubsectionTitleText, {paddingLeft: 10}]}>
                         {this.props.title}
                     </Text>
                 )}
@@ -272,9 +275,11 @@ const styles = StyleSheet.create({
     container: {
         padding: Distances.ScaledContentDistanceFromEdge,
         margin: 4,
-        elevation: 2,
-        backgroundColor: Colors.cardBackgroundColor,
-        marginVertical: 3
+        backgroundColor: Styles.greyBackground,
+        marginVertical: 3,
+        borderWidth: 2,
+        borderColor: Styles.greyBackground,
+        borderRadius: 10
     },
     viewAllContainer: {
         right: Distances.ScaledContentDistanceFromEdge,

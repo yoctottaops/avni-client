@@ -95,7 +95,7 @@
     "scheduledDate": "ನಿಗದಿತ",
     "lastVisitDate": "ಕೊನೆಯದಾಗಿ ಭೇಟಿ ನೀಡಲಾಗಿದೆ",
     "allEnrolmentsInProgram": "ಎಲ್ಲಾ ದಾಖಲಾತಿಗಳು",
-    "enrolledOn": "ನೋಂದಾಯಿಸಲಾಗಿದೆ:",
+    "enrolledOn": "ನೋಂದಾಯಿಸಲಾಗಿದೆ",
     "exitedOn": "ಇಲ್ಲಿಂದ ನಿರ್ಗಮಿಸಲಾಗಿದೆ:",
     "enrolmentAttributes": "ದಾಖಲಾತಿ ಗುಣಲಕ್ಷಣಗಳು",
     "viewSchedule": "ವೇಳಾಪಟ್ಟಿಯನ್ನು ವೀಕ್ಷಿಸಿ",
@@ -262,9 +262,10 @@
     "viewAll": "ಎಲ್ಲವನ್ನೂ ವೀಕ್ಷಿಸಿ",
     "unplannedVisit": "ಪ್ಲಾನ್‌ ಮಾಡದ ಭೇಟಿ",
     "registrationInformation": "ನೋಂದಣಿ ವಿವರಗಳು",
-    "registeredOn": "ನೋಂದಣಿ ದಿನಾಂಕ:",
+    "registeredOn": "ನೋಂದಣಿ ದಿನಾಂಕ",
     "you": "ಸ್ವಯಂ",
     "by": "ಮೂಲಕ: {{user}}",
+    "byOn": "ಮೂಲಕ: {{user}} ಮೇಲೆ: {{date}}",
     "addRelative": "ಸಂಬಂಧಿಕರು",
     "noRelativeAdded": "ಯಾವುದೇ ಸಂಬಂಧಿತರನ್ನು ಸೇರಿಸಲಾಗಿಲ್ಲ",
     "profile": "ವಿವರ",
@@ -310,10 +311,11 @@
     "disableAutoSync": "ಸ್ವಯಂ ಸಿಂಕ್ ಅನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿ",
     "autoSync": "ಸ್ವಯಂ ಸಿಂಕ್",
     "addressFilterBehaviorHint": "(ಯಾವ ವಿಷಯವನ್ನು ನೋಂದಾಯಿಸಲಾಗಿದೆ ಎಂಬುದನ್ನು ನಿಖರವಾದ ಮಟ್ಟವನ್ನು ಆರಿಸಿ)",
-    "queryExecutionError": "ನಿಯಮ ಕಾರ್ಯಗತಗೊಳಿಸುವಲ್ಲಿ ವಿಫಲವಾಗಿದೆ",
-    "nestedReportCardsCountMismatch": "ಕಾರ್ಡ್ಗಳ ಸಂಖ್ಯೆ ಹೊಂದಿಕೆಯಾಗುವುದಿಲ್ಲ",
+    "queryExecutionError" : "ನಿಯಮ ಕಾರ್ಯಗತಗೊಳಿಸುವಲ್ಲಿ ವಿಫಲವಾಗಿದೆ",
+    "nestedReportCardsCountMismatch" : "ಕಾರ್ಡ್ಗಳ ಸಂಖ್ಯೆ ಹೊಂದಿಕೆಯಾಗುವುದಿಲ್ಲ",
     "addressFilterImplicitBehaviorHint": "(ಆಯ್ಕೆಯು ಕೆಳ ಹಂತಗಳನ್ನು ಸೂಚ್ಯವಾಗಿ ಒಳಗೊಂಡಿರುತ್ತದೆ)",
     "copyErrorTryAgain": "ನಕಲು ದೋಷ ಮತ್ತು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
-    "copyErrorAndCancel": "ನಕಲು ದೋಷ ಮತ್ತು ರದ್ದುಗೊಳಿಸು"
+    "copyErrorAndCancel": "ನಕಲು ದೋಷ ಮತ್ತು ರದ್ದುಗೊಳಿಸು",
+    "reportCopiedReportByPasting": "ವರದಿಯನ್ನು ನಕಲಿಸಲಾಗಿದೆ. ವರದಿ ಮಾಡಲು ನೀವು ಸಂದೇಶ ಕಳುಹಿಸುವ ಅಪ್ಲಿಕೇಶನ್‌ನಲ್ಲಿ ಅಂಟಿಸಬಹುದು."
   }
 }

@@ -79,7 +79,7 @@
     "scheduledDate": "नियोजीलेले",
     "lastVisitDate": "शेवटची भेट",
     "allEnrolmentsInProgram": "सर्व इंरोलमेंटस ",
-    "enrolledOn": "या तारखेस इंरोलमेंट केले:",
+    "enrolledOn": "या तारखेस इंरोलमेंट केले",
     "you": "स्वत:",
     "enrolmentAttributes": "इंरोलमेंट च्या विळी आवश्यक बाबी",
     "viewSchedule": "नियोजन पहा",
@@ -246,8 +246,9 @@
     "plannedVisits": "नियोजित भेट",
     "visitsCompleted": "दिलेल्या भेटी",
     "unplannedVisit": "अनियोजित भेट",
-    "registeredOn": "नोंदणीची तारीख:",
+    "registeredOn": "नोंदणीची तारीख",
     "by": "द्वारे: {{user}}",
+    "byOn": "{{user}} द्वारे {{date}} वर",
     "home": "होम",
     "Program": "कार्यक्रम",
     "Choose type": "पर्याय निवडा",
@@ -303,6 +304,7 @@
     "nestedReportCardsCountMismatch": "कॉन्फिगर केलेली कार्डची संख्या नियमातील कार्डांच्या संख्येशी जुळत नाही",
     "addressFilterImplicitBehaviorHint": "(निवडीत खालच्या स्तरांचा समावेश होतो)",
     "copyErrorTryAgain": "एरर कॉपी करा आणि पुन्हा प्रयत्न करा",
-    "copyErrorAndCancel": "एरर कॉपी करा आणि रद्द करा"
+    "copyErrorAndCancel": "एरर कॉपी करा आणि रद्द करा",
+    "reportCopiedReportByPasting": "अहवाल कॉपी केला आहे. तुम्ही तक्रार करण्यासाठी मेसेजिंग ॲपमध्ये पेस्ट करू शकता."
   }
 }

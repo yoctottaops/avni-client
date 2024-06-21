@@ -63,36 +63,18 @@ class Relatives extends AbstractComponent {
 
     onResultRowPress(individual) {
         this.props.onRelativeSelection(this, individual);
-        // CHSNavigator.navigateToProgramEnrolmentDashboardView(this, individual.uuid);
-    }
-
-    renderProgram(program, index) {
-        return (
-            <Text key={index} disabled
-                  style={[{
-                      height: 22,
-                      marginLeft: 4,
-                      marginRight: 4,
-                      borderRadius: 2,
-                      paddingHorizontal: 4,
-                      backgroundColor: program.colour,
-                      color: Colors.TextOnPrimaryColor,
-                      textAlignVertical: 'center'
-                  }, Styles.userProfileProgramTitle]}>{this.I18n.t(program.displayName)}</Text>
-        );
     }
 
     renderRelativeActionButton(individualRelative) {
-        return (<View>
-            <View style={{flex: 0.125, alignItems: 'flex-start', justifyContent: 'flex-start'}}>
+        return <View style={{flex: 1, alignItems: 'flex-end', justifyContent: 'flex-end'}}>
+            <TouchableNativeFeedback>
                 <Button transparent
                         onPress={() => this.props.onRelativeDeletion(individualRelative)}
-                        _text={{fontSize: Fonts.Medium, paddingHorizontal: 5}}
                         style={styles.buttonStyle}>
-                    {this.I18n.t("delete")}
+                    <Text style={{fontSize: Fonts.Medium, color: Colors.ActionButtonColor}}>{this.I18n.t("delete")}</Text>
                 </Button>
-            </View>
-        </View>);
+            </TouchableNativeFeedback>
+        </View>;
     }
 
     renderNoRelativeMessage() {
@@ -110,7 +92,7 @@ class Relatives extends AbstractComponent {
         const dataSource = new ListView.DataSource({rowHasChanged: () => false}).cloneWithRows(relatives);
         return (
             relatives.length > 0 ?
-                (<View style={{flexDirection: "column", paddingBottom: 10}}>
+                (<View style={{flexDirection: "column", paddingBottom: 10, borderRadius: 10}}>
                     {this.renderTitle()}
                     <ListView enableEmptySections={true}
                               dataSource={dataSource}
@@ -119,17 +101,18 @@ class Relatives extends AbstractComponent {
                                                            background={TouchableNativeFeedback.SelectableBackground()}>
                                       <View style={styles.container}>
                                           <View style={styles.relativeDetails}>
-                                              <View style={{flex: 0.75}}>
+                                              <View style={{flex: 1, alignContent: 'flex-start'}}>
                                                   <Text
                                                       style={Styles.relativeRelationText}>{this.I18n.t(relative.relation.name)}</Text>
                                               </View>
-                                              {editDeleteFeatureToggle && this.renderRelativeActionButton(relative)}
                                           </View>
-                                          <SubjectInfoCard individual={relative.relative} />
+                                          <View style={{marginHorizontal: 10}}>
+                                              <SubjectInfoCard individual={relative.relative}/>
+                                          </View>
+                                          {editDeleteFeatureToggle && this.renderRelativeActionButton(relative)}
                                       </View>
                                   </TouchableNativeFeedback>
                               }>
-
                     </ListView>
                 </View>)
                 : this.renderNoRelativeMessage()
@@ -142,14 +125,15 @@ export default Relatives;
 const styles = StyleSheet.create({
     container: {
         margin: 4,
-        elevation: 2,
-        backgroundColor: Colors.cardBackgroundColor,
+        backgroundColor: Styles.greyBackground,
         marginVertical: 3,
-        paddingBottom: 5,
-        paddingTop: 5
+        paddingBottom: 10,
+        paddingTop: 5,
+        borderRadius: 10
     },
     relativeDetails: {
         flexDirection: 'row',
+        backgroundColor: Styles.greyBackground,
         flexWrap: 'nowrap',
         paddingHorizontal: Styles.ContainerHorizontalDistanceFromEdge,
         alignItems: 'center',
@@ -157,6 +141,8 @@ const styles = StyleSheet.create({
         flex: 1
     },
     buttonStyle: {
-        backgroundColor: Colors.ActionButtonColor
+        backgroundColor: Styles.greyBackground,
+        borderRadius: 5,
+        marginHorizontal: 5
     }
 });

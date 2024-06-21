@@ -11,9 +11,12 @@ Styles.blackColor = '#000000';
 Styles.redColor = '#ff0000';
 Styles.defaultBackground = '#212121';
 Styles.groupSubjectBackground = '#871f74';
-Styles.greyBackground = '#f7f7f7';
+Styles.greyBackground = '#f6f6f6';
 Styles.greyText = '#666666';
 Styles.blueColor='#0000e5';
+Styles.blackish = '#1E1E1E';
+Styles.lightgrey = '#919191';
+Styles.grey = '#868686';
 
 Styles.titleSize = 20;
 Styles.normalTextSize = 16;
@@ -26,7 +29,7 @@ Styles.normalTextSizeLineHeight = computeLineHeight(Styles.normalTextSize);
 Styles.smallTextSizeLineHeight = computeLineHeight(Styles.smallTextSize);
 Styles.smallerTextSizeLineHeight = computeLineHeight(Styles.smallTextSize);
 
-Styles.ContentDistanceFromEdge = 24;
+Styles.ContentDistanceFromEdge = 28;
 Styles.ContainerHorizontalDistanceFromEdge = 14;
 Styles.ContentDistanceWithinContainer = 10;
 Styles.VerticalSpacingBetweenFormElements = 20;
@@ -36,7 +39,8 @@ Styles.VerticalSpacingBetweenOptionItems = 20;
 
 Styles.programProfileHeading = {
     fontSize: Styles.normalTextSize,
-    color: Styles.whiteColor,
+    color: Styles.blackish,
+    fontWeight: 'bold',
     lineHeight: Styles.normalTextSizeLineHeight
 };
 
@@ -46,7 +50,7 @@ Styles.container = {
 
 Styles.programProfileSubheading = {
     fontSize: Styles.smallTextSize,
-    color: Styles.whiteColor,
+    color: Styles.blackish,
     lineHeight: Styles.smallTextSizeLineHeight
 };
 
@@ -244,8 +248,8 @@ Styles.userProfileSubtext = {
 };
 
 Styles.relativeRelationText = {
-    fontSize: Styles.normalTextSize,
-    fontStyle: 'normal',
+    fontSize: Styles.smallTextSize,
+    // fontStyle: 'normal',
     color: Styles.blackColor,
     paddingRight: 8
 };
@@ -323,5 +327,13 @@ Styles.cardTitle = {
     color: Styles.blackColor,
     letterSpacing: 0.1
 };
+
+Styles.dashboardSubsectionTitleText = {
+    color: Styles.lightgrey,
+    textTransform: 'uppercase',
+    fontSize: 11,
+    fontWeight: 'bold',
+    letterSpacing: 0.1
+}
 
 export default Styles;

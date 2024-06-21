@@ -97,7 +97,7 @@
     "scheduledDate": "Scheduled",
     "lastVisitDate": "Last Visited",
     "allEnrolmentsInProgram": "All enrolments in",
-    "enrolledOn": "Enrolled on:",
+    "enrolledOn": "Enrolled on",
     "exitedOn": "Exited on:",
     "enrolmentAttributes": "Enrolment Attributes",
     "viewSchedule": "VIEW SCHEDULE",
@@ -204,7 +204,7 @@
     "totalQueuedCount": "Total Queued",
     "videoListNotAvailable": "No video list available",
     "lastLoaded": "Last Loaded",
-    "totalMatchingResults": "Total matching results",
+    "totalMatchingResults": "matching results",
     "displayed": "Displayed",
     "uploadMedia": "Uploading saved media files",
     "uploadLocallySavedData": "Uploading saved data",
@@ -266,8 +266,9 @@
     "viewAll": "VIEW ALL",
     "unplannedVisit": "Unplanned Visit",
     "registrationInformation": "Registration Details",
-    "registeredOn": "Registered on:",
-    "by": "By: {{user}}",
+    "registeredOn": "Registered on",
+    "by": "by {{user}}",
+    "byOn": "By {{user}} on {{date}}",
     "you": "You",
     "addRelative": "Add Relative",
     "noRelativeAdded": "No Relative Added",
@@ -430,7 +431,7 @@
     "registrationOverviewSection": "Registration overview",
     "noFileTypeErrorMessage": "File type not recognised, please select correct file.",
     "FileTypeErrorMessage": "Selected file type {{type}} does not match with the required file type(s) {{allowedTypeNames}}",
-    "FileSizeErrorMessage": "File size {{size}} MB increases the max file size {{allowedMaxSize}} MB",
+    "FileSizeErrorMessage": "File size {{size}} MB is more than the allowed size {{allowedMaxSize}} MB",
     "FileSelectionErrorTitle": "Error while selecting the file",
     "FetchingChangedResource": "Fetching changed resources from the server",
     "chooseVisitType": "Choose Visit Type",
@@ -499,6 +500,7 @@
     "addressFilterBehaviorHint": "(Choose exact level at which subject is registered)",
     "addressFilterImplicitBehaviorHint": "(Selection includes lower levels implicitly)",
     "copyErrorTryAgain": "Copy Error & Try Again",
-    "copyErrorAndCancel": "Copy Error & Cancel"
+    "copyErrorAndCancel": "Copy Error & Cancel",
+    "reportCopiedReportByPasting": "Report is copied. You can paste in a messaging app to report."
   }
 }

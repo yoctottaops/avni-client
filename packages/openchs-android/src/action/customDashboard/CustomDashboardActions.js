@@ -11,7 +11,6 @@ import CryptoUtils from '../../utility/CryptoUtils';
 import MessageService from '../../service/MessageService';
 
 class CustomDashboardActions {
-
     static getInitialState(context) {
         return {
             loading: false,
@@ -36,9 +35,8 @@ class CustomDashboardActions {
 
     static onLoad(state, action, context) {
         const newState = {...state};
-        const onlyPrimary = action.onlyPrimary;
         const dashboardService = context.get(CustomDashboardService);
-        const dashboards = dashboardService.getDashboards(onlyPrimary);
+        const dashboards = dashboardService.getDashboards(action.customDashboardType);
         newState.dashboards = dashboards;
         newState.activeDashboardUUID = _.get(_.head(dashboards), 'uuid');
         return CustomDashboardActions.loadCurrentDashboardInfo(context, newState);
@@ -61,6 +59,8 @@ class CustomDashboardActions {
         let filterConfigsJSON = JSON.stringify(filterConfigs);
         let filterConfigsChecksum = CryptoUtils.computeHash(filterConfigsJSON);
         const cachedData = customDashboardCacheService.fetchCachedData(newState.activeDashboardUUID, filterConfigsChecksum);
+
+        newState.filtersPresent = _.keys(filterConfigs).length > 0;
         newState.filterConfigsChecksum = cachedData.getChecksum();
         newState.customDashboardFilters = cachedData.getTransformedFilters();
         newState.ruleInput = cachedData.getRuleInput();
@@ -118,8 +118,8 @@ class CustomDashboardActions {
         reportCardSectionMappings.forEach(rcm => {
             const start = new Date();
             const countQueryResponse = context.get(ReportCardService).getReportCardCount(rcm.card, newState.ruleInput.ruleInputArray);
-            if(rcm.card.nested) {
-                if(countQueryResponse && countQueryResponse.length === rcm.card.countOfCards) {
+            if (rcm.card.nested) {
+                if (countQueryResponse && countQueryResponse.length === rcm.card.countOfCards) {
                     _.forEach(countQueryResponse, (reportCard, index) => {
                         const itemKey = rcm.card.getCardId(index);
                         newState.cardToCountResultMap[itemKey] = {
@@ -127,7 +127,7 @@ class CustomDashboardActions {
                             itemKey
                         };
                     });
-                } else if(countQueryResponse && countQueryResponse.length !== rcm.card.countOfCards) {
+                } else if (countQueryResponse && countQueryResponse.length !== rcm.card.countOfCards) {
                     Array(rcm.card.countOfCards).fill(rcm.card).forEach((reportCard, index) => {
                         const itemKey = reportCard.getCardId(index);
                         newState.cardToCountResultMap[itemKey] = {
@@ -152,9 +152,9 @@ class CustomDashboardActions {
         const reportCardSectionMappings = state.reportCardSectionMappings;
         newState.countUpdateTime = new Date(); //Update this to ensure reportCard count change is reflected
         reportCardSectionMappings.forEach(rcm => {
-            const keysOfReportCard= _.keys(newState.cardToCountResultMap).filter((itemKey) => itemKey.startsWith(rcm.card.uuid));
+            const keysOfReportCard = _.keys(newState.cardToCountResultMap).filter((itemKey) => itemKey.startsWith(rcm.card.uuid));
             _.forEach(keysOfReportCard, (itemKey) => {
-                newState.cardToCountResultMap[itemKey]= null;
+                newState.cardToCountResultMap[itemKey] = null;
             });
         });
         return newState;

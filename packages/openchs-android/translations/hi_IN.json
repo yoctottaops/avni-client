@@ -81,7 +81,7 @@
     "scheduledDate": "प्लान तारिख",
     "lastVisitDate": "पिछला विजिट तारिख",
     "allEnrolmentsInProgram": "सभी इंरोलमेंटस",
-    "enrolledOn": "इंरोलमेंटस तारिख:",
+    "enrolledOn": "इंरोलमेंटस तारिख",
     "you": "स्वयं",
     "noEnrolments": "कोई एनरोलमेंट नहीं",
     "enrolments": "इंरोल्मेंट",
@@ -306,7 +306,7 @@
     "registrationOverviewSection": "पंजीकरण अवलोकन",
     "noFileTypeErrorMessage": "फ़ाइल प्रकार पहचाना नहीं गया, कृपया सही फ़ाइल चुनें।",
     "FileTypeErrorMessage": "चयनित फ़ाइल प्रकार {{type}} आवश्यक फ़ाइल प्रकार से मेल नहीं खाता {{allowedTypeNames}}",
-    "FileSizeErrorMessage": "फ़ाइल का आकार {{size}} MB अधिकतम फ़ाइल आकार {{allowedMaxSize}} MB",
+    "FileSizeErrorMessage": "फ़ाइल का आकार {{size}} MB अनुमत आकार {{allowedMaxSize}} MB से अधिक है",
     "FileSelectionErrorTitle": "फ़ाइल का चयन करते समय त्रुटि",
     "FetchingChangedResource": "परिवर्तित डेटा प्राप्त हो राहा हैं",
     "chooseVisitType": "विज़िट प्रकार चुनें",
@@ -347,8 +347,9 @@
     "GlificMessagesList": "ग्लिफिक संदेश सूची",
     "checklistOverviewSection": "टीकाकरण अवलोकन",
     "dueChecklist": "ड्यू",
-    "registeredOn": "पंजीकरण की तारीख:",
+    "registeredOn": "पंजीकरण की तारीख",
     "by": "द्वारा: {{user}}",
+    "byOn": "{{user}} द्वारा {{date}} पर",
     "disableAutoRefresh": "डैशबोर्ड ऑटो रिफ्रेश को अक्षम करें",
     "autoRefresh": "डैशबोर्ड ऑटो रिफ्रेश",
     "trackLocation": "ट्रैक स्थान",
@@ -373,6 +374,7 @@
     "nestedReportCardsCountMismatch": "कार्डों की कॉन्फ़िगर की गई संख्या नियम में कार्डों की संख्या से मेल नहीं खाती",
     "addressFilterImplicitBehaviorHint": "(चयन में निचले स्तर परोक्ष रूप से शामिल हैं)",
     "copyErrorTryAgain": "त्रुटि कॉपी करें और पुनः प्रयास करें",
-    "copyErrorAndCancel": "त्रुटि कॉपी करें और रद्द करें"
+    "copyErrorAndCancel": "त्रुटि कॉपी करें और रद्द करें",
+    "reportCopiedReportByPasting": "रिपोर्ट कॉपी कर ली गई है। रिपोर्ट करने के लिए आप मैसेजिंग ऐप में पेस्ट कर सकते हैं।"
   }
 }

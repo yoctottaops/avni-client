@@ -8,12 +8,13 @@ import Reducers from "../../reducer";
 import Colors from "../primitives/Colors";
 import CHSNavigator from "../../utility/CHSNavigator";
 import GrowthChartView from "./GrowthChartView";
-import * as _ from "lodash";
+import _ from "lodash";
 import Fonts from "../primitives/Fonts";
 import Styles from "../primitives/Styles";
 import {Privilege, EncounterType} from "avni-models";
 import PrivilegeService from "../../service/PrivilegeService";
 import {StartProgramActions as Actions} from "../../action/program/StartProgramActions";
+import Pressable from "react-native/Libraries/Components/Pressable/Pressable";
 
 @Path('/ProgramActionsView')
 class ProgramActionsView extends AbstractComponent {

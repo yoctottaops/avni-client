@@ -89,12 +89,12 @@ class SubjectDashboardProfileTab extends AbstractComponent {
         if (!this.privilegeService.hasEverSyncedGroupPrivileges() || this.privilegeService.hasAllPrivileges() || _.includes(allowedSubjectTypesForAddMember, this.state.individual.subjectType.uuid)) {
             return [new ContextAction(this.I18n.t('addMember'), () => {
                 const groupRoles = this.context.getService(GroupSubjectService).getGroupRoles(this.state.individual.subjectType)
-                if(_.isEmpty(groupRoles))
+                if (_.isEmpty(groupRoles))
                     Alert.alert(this.I18n.t("rolesNotConfigured"), this.I18n.t("rolesNotConfiguredDescription"), [
                         {text: this.I18n.t('okay'), onPress: _.noop}
                     ]);
                 else
-                 CHSNavigator.navigateToAddMemberView(this, this.state.individual)
+                    CHSNavigator.navigateToAddMemberView(this, this.state.individual)
             })];
         } else return []
     }
@@ -173,7 +173,7 @@ class SubjectDashboardProfileTab extends AbstractComponent {
                 <View style={{paddingLeft: 10}}>
                     <ObservationsSectionTitle contextActions={this.getRelativeActions()}
                                               title={this.I18n.t('Relatives')}
-                                              titleStyle={Styles.cardTitle}/>
+                                              titleStyle={Styles.dashboardSubsectionTitleText}/>
                 </View>
                 <Relatives relatives={this.state.relatives}
                            style={{marginVertical: DGS.resizeHeight(8)}}
@@ -196,6 +196,7 @@ class SubjectDashboardProfileTab extends AbstractComponent {
         });
         const removeAllowed = this.checkPrivilege(allowedSubjectTypesForRemoveMember, applicableActions, {
             label: 'remove',
+            color: Colors.CancelledVisitColor,
             fn: (groupSubject) => this.onMemberRemove(groupSubject)
         });
         const nonVoidedMembersGroupSubjects = _.filter(groupSubjects, (groupSubject) => !groupSubject.memberSubject.voided);
@@ -297,64 +298,74 @@ class SubjectDashboardProfileTab extends AbstractComponent {
 
     renderProfile() {
         const formMappingService = this.getService(FormMappingService);
+        const registrationForm = formMappingService.findRegistrationForm(this.state.individual.subjectType);
         const createdBy = this.getService(UserInfoService).getCreatedBy(this.state.individual, this.I18n);
         
         const editProfileCriteria = `privilege.name = '${Privilege.privilegeName.editSubject}' AND privilege.entityType = '${Privilege.privilegeEntityType.subject}' AND subjectTypeUuid = '${this.state.individual.subjectType.uuid}'`;
         const voidProfileCriteria = `privilege.name = '${Privilege.privilegeName.voidSubject}' AND privilege.entityType = '${Privilege.privilegeEntityType.subject}' AND subjectTypeUuid = '${this.state.individual.subjectType.uuid}'`;
         const hasEditPrivilege = this.privilegeService.hasActionPrivilegeForCriteria(editProfileCriteria, 'subjectTypeUuid');
         const hasVoidPrivilege = this.privilegeService.hasActionPrivilegeForCriteria(voidProfileCriteria, 'subjectTypeUuid');
-        return <View>
+        return registrationForm ? (<View>
             <TouchableOpacity onPress={() => this.dispatchAction(Actions.ON_TOGGLE, {keyName: 'expand'})}>
-                <View styel={{flexDirection: 'column'}}>
-                    <Text style={[Styles.cardTitle, {color: Colors.DefaultPrimaryColor}]}>
-                        {this.I18n.t("registrationInformation")}
-                    </Text>
+                <View style={{flexDirection: 'column'}}>
                     <Text style={{fontSize: Fonts.Medium, color: Colors.DefaultPrimaryColor}}>
                         {`${this.I18n.t("registeredOn")} ${General.toDisplayDate(this.state.individual.registrationDate)}. `}
                     </Text>
                 </View>
                 <View style={{right: 2, position: 'absolute', alignSelf: 'center'}}>
-                    {this.state.expand === false ?
-                        <Icon name={'arrow-down'} size={12}/> :
+                    {this.state.expand === false ? <Icon name={'arrow-down'} size={12}/> :
                         <Icon name={'arrow-up'} size={12}/>}
                 </View>
             </TouchableOpacity>
             <View style={{marginTop: 3}}>
-                {this.state.expand === true ?
-                    <View style={{paddingHorizontal: 10}}>
-                        <Observations form={formMappingService.findRegistrationForm(this.state.individual.subjectType)}
-                                      observations={this.state.individual.observations}
-                                      style={{marginVertical: 3}}
-                                      quickFormEdit={hasEditPrivilege}
-                                      onFormElementGroupEdit={(pageNumber) => this.editSubjectByFEG(pageNumber)}
-                        />
-                    </View> : <View/>}
+                {this.state.expand === true ? <View style={{paddingHorizontal: 10}}>
+                    <Observations form={registrationForm}
+                                  observations={this.state.individual.observations}
+                                  style={{marginVertical: 3}}
+                                  quickFormEdit={hasEditPrivilege}
+                                  onFormElementGroupEdit={(pageNumber) => this.editSubjectByFEG(pageNumber)}
+                    />
+                </View> : <View/>}
                 {this.renderSelectionOptions(hasEditPrivilege, hasVoidPrivilege)}
             </View>
-        </View>
+        </View>) : (<View style={{flexDirection: 'column'}}>
+            <Text style={{fontSize: Fonts.Medium, color: Colors.DefaultPrimaryColor}}>
+                {`${this.I18n.t("registeredOn")} ${General.toDisplayDate(this.state.individual.registrationDate)}. ${createdByMessage}`}
+            </Text>
+        </View>);
     }
 
     renderProfileOrVoided(individual) {
         if (individual.subjectType.getSetting(SubjectType.settingKeys.displayRegistrationDetails) !== false) {
-            return <View style={styles.container}>
-                {individual.voided ? this.renderVoided() : this.renderProfile()}
+            return <View>
+                <Text style={[Styles.dashboardSubsectionTitleText, {paddingLeft: 10}]}>
+                    {this.I18n.t("registrationInformation")}
+                </Text>
+                <View style={styles.container}>
+                    {individual.voided ? this.renderVoided() : this.renderProfile()}
+                </View>
             </View>
         }
     }
 
     renderSummary() {
-        return <View style={{
-            padding: Distances.ScaledContentDistanceFromEdge,
-            margin: 4,
-            elevation: 2,
-            backgroundColor: Colors.cardBackgroundColor,
-            marginVertical: 16
-        }}>
-            <View>
-                <Text style={Styles.cardTitle}>{this.I18n.t('subjectSummary')}</Text>
+        return <View>
+            <View style={{marginLeft: 10}}>
+                <Text style={Styles.dashboardSubsectionTitleText}>{this.I18n.t('subjectSummary')}</Text>
             </View>
-            <Observations observations={_.defaultTo(this.state.subjectSummary, [])}
-                          style={{marginVertical: DGS.resizeHeight(8)}}/>
+
+            <View style={{
+                padding: Distances.ScaledContentDistanceFromEdge,
+                margin: 4,
+                backgroundColor: Styles.greyBackground,
+                marginVertical: 16,
+                borderWidth: 2,
+                borderColor: Styles.greyBackground,
+                borderRadius: 10
+            }}>
+                <Observations observations={_.defaultTo(this.state.subjectSummary, [])}
+                              style={{marginVertical: DGS.resizeHeight(8)}}/>
+            </View>
         </View>
     }
 
@@ -365,7 +376,7 @@ class SubjectDashboardProfileTab extends AbstractComponent {
         const relativesFeatureToggle = individual.isPerson() && isRelationshipTypePresent;
         const groupSubjectToggle = individual.subjectType.isGroup();
         return (
-            <View style={{backgroundColor: Colors.GreyContentBackground, marginTop: 10}}>
+            <View style={{backgroundColor: Colors.WhiteContentBackground, marginTop: 10}}>
                 <View style={{marginHorizontal: 10}}>
                     <NewFormButton display={displayGeneralEncounterInfo} style={{marginBottom: 50}}/>
                     <CustomActivityIndicator loading={displayIndicator}/>
@@ -382,7 +393,7 @@ class SubjectDashboardProfileTab extends AbstractComponent {
                     {groupSubjectToggle ? this.renderMembers() : <View/>}
                 </View>
                 {displayGeneralEncounterInfo && <SubjectDashboardGeneralTab {...this.props}/>}
-                <Separator height={110} backgroundColor={Colors.GreyContentBackground}/>
+                <Separator height={110} backgroundColor={Colors.WhiteContentBackground}/>
                 {editFormRuleResponse.isEditDisallowed() &&
                     <AvniToast message={this.I18n.t(editFormRuleResponse.getMessageKey())} onAutoClose={() => this.dispatchAction(Actions.ON_EDIT_ERROR_SHOWN)}/>}
             </View>
@@ -397,13 +408,9 @@ const styles = StyleSheet.create({
     container: {
         padding: Distances.ScaledContentDistanceFromEdge,
         margin: 4,
-        elevation: 2,
-        backgroundColor: Colors.cardBackgroundColor,
+        backgroundColor: Styles.greyBackground,
         marginVertical: 3,
-        borderBottomLeftRadius: 5,
-        borderBottomRightRadius: 5,
-        borderTopLeftRadius: 5,
-        borderTopRightRadius: 5,
+        borderRadius: 10,
     },
     memberCard: {
         marginTop: 5,

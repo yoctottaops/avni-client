@@ -109,7 +109,7 @@ class SubjectDashboardGeneralTab extends AbstractComponent {
 
     render() {
         return (
-            <View style={{backgroundColor: Colors.GreyContentBackground, marginTop: 10}}>
+            <View style={{backgroundColor: Colors.WhiteContentBackground, marginTop: 10}}>
                 <ActionSelector
                     title={this.I18n.t("followupTypes")}
                     hide={() => this.dispatchAction(Actions.HIDE_ENCOUNTER_SELECTOR)}
@@ -117,12 +117,12 @@ class SubjectDashboardGeneralTab extends AbstractComponent {
                     actions={this.state.encounterActions}
                 />
                 <View style={{marginHorizontal: 10}}>
-                    <NewFormButton display={!this.props.params.displayGeneralInfoInProfileTab}/>
+                    <NewFormButton display={!this.props.params.displayGeneralInfoInProfileTab} style={{marginBottom: 50}}/>
                     {this.renderDraftVisits()}
                     {this.renderPlannedVisits()}
                     {this.renderCompletedVisits()}
                 </View>
-                <Separator height={110} backgroundColor={Colors.GreyContentBackground}/>
+                <Separator height={110} backgroundColor={Colors.WhiteContentBackground}/>
                 {this.state.editFormRuleResponse.isEditDisallowed() &&
                     <AvniToast message={this.I18n.t(this.state.editFormRuleResponse.getMessageKey())} onAutoClose={() => this.dispatchAction(Actions.ON_EDIT_ERROR_SHOWN)}/>}
             </View>
