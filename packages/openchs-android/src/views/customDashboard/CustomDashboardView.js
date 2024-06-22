@@ -4,7 +4,7 @@ import AppHeader from "../common/AppHeader";
 import React, {Fragment} from "react";
 import Reducers from "../../reducer";
 import {CustomDashboardActionNames as Actions} from "../../action/customDashboard/CustomDashboardActions";
-import {SafeAreaView, ScrollView, StyleSheet, Text, TouchableNativeFeedback, View} from "react-native";
+import {RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, TouchableNativeFeedback, View} from "react-native";
 import _ from "lodash";
 import CustomDashboardTab from "./CustomDashboardTab";
 import {DashboardSection} from 'openchs-models';

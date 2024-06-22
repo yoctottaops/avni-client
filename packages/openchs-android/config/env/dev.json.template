@@ -1,5 +1,5 @@
 {
-  "SERVER_URL": "https://teachtool.schooledu.ap.gov.in",
+  "SERVER_URL": "http://192.168.0.193:8021",
   "ENV": "dev",
   "CLIENT_ID": "dummy",
   "goToLastPageOnNext": false,

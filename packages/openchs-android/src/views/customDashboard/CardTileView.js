@@ -36,7 +36,7 @@ const renderNumber = function (countResult = {}, textColor) {
     );
 };
 
-const cardGap = 14;
+const cardGap = 15;
 
 export const CardTileView = ({index, reportCard, I18n, onCardPress, countResult}) => {
     const {name, colour, itemKey, iconName} = reportCard;

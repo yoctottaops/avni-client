@@ -6,7 +6,7 @@ import GlobalContext from "../../GlobalContext";
 import {IDP_PROVIDERS} from "../../model/IdpProviders";
 import CookieManager from "@react-native-cookies/cookies";
 
-const ACCEPTABLE_RESPONSE_STATUSES = [200, 201];
+const ACCEPTABLE_RESPONSE_STATUSES = [200, 201, 301];
 
 const getAuthToken = async () => {
     const authService = GlobalContext.getInstance().beanRegistry.getService("authService");
