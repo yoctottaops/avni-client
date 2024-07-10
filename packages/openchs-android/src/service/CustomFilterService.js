@@ -14,15 +14,22 @@ import {
 import General from "../utility/General";
 import _ from "lodash";
 import ConceptService from "./ConceptService";
-import React from "react";
 import moment from "moment";
-import EntityService from "./EntityService";
+import RealmQueryService from "./query/RealmQueryService";
+
+function getDateFilterFunction(filterValue, widget, queryColumn) {
+    if (widget === CustomFilter.widget.Range) {
+        const {minValue, maxValue} = filterValue;
+        return () => ` ${queryColumn} >= ${RealmQueryService.toMidnight(minValue)} &&  ${queryColumn} <= ${RealmQueryService.toMidnight(maxValue)} `;
+    } else {
+        return () => ` ${queryColumn} == ${RealmQueryService.toMidnight(filterValue)} `;
+    }
+}
 
 @Service("customFilterService")
 class CustomFilterService extends BaseService {
     constructor(db, context) {
         super(db, context);
-
     }
 
     getSchema() {
@@ -108,18 +115,23 @@ class CustomFilterService extends BaseService {
                 && filter.subjectTypeUUID === subjectTypeUUID);
     }
 
-    queryEntity(schemaName, selectedAnswerFilters, otherFilters, indFunc, includeVoided) {
-        return [...this.db.objects(schemaName)
-            .filtered(includeVoided ? `uuid != null ` : `voided = false `)
-            .filtered(`${selectedAnswerFilters()}`)
-            .filtered((_.isEmpty(otherFilters) ? 'uuid != null' : `${otherFilters}`))
-            .map(indFunc)
-        ];
+    queryEntity(schemaName, selectedAnswerQueryFunction, otherFilters, indFunc, includeVoided) {
+        const query = selectedAnswerQueryFunction();
+
+        let results = this.db.objects(schemaName);
+        if (includeVoided)
+            results = results.filtered("voided = false");
+        if (!_.isEmpty(query))
+            results = results.filtered(query);
+        if (!_.isEmpty(otherFilters))
+            results = results.filtered(otherFilters);
+
+        return [...results.map(indFunc)];
     }
 
     // Note that the query is run for every filter(concept) separately, this is because we don't have
     // joins in realm and after getting latest from each filter(concept) we need to query for selected concept answer.
-    queryFromLatestObservation(schemaName, conceptFilters, selectedAnswerFilters, scopeFilters, sortFilter, indFunc, widget, inMemoryFilter, includeVoided) {
+    queryFromLatestObservation(schemaName, conceptFilters, selectedAnswerFilterFunction, scopeFilters, sortFilter, indFunc, widget, inMemoryFilter, includeVoided) {
         const latestEncounters = this.db.objects(schemaName)
             .filtered(includeVoided ? `uuid != null ` : `voided = false `)
             //limit the scope of query by giving encounter/program uuid
@@ -129,15 +141,15 @@ class CustomFilterService extends BaseService {
             //get the most latest encounter for an individual
             .filtered(_.isEmpty(sortFilter) ? 'uuid != null' : ` ${sortFilter} `);
 
-        return widget === CustomFilter.widget.Range ? this.filterForRangeWidgetType(latestEncounters, selectedAnswerFilters, indFunc)
-            : this.filterForFixedWidgetType(latestEncounters, schemaName, selectedAnswerFilters, indFunc, inMemoryFilter);
+        return widget === CustomFilter.widget.Range ? this.filterForRangeWidgetType(latestEncounters, selectedAnswerFilterFunction, indFunc)
+            : this.filterForNonRangeWidgetType(latestEncounters, schemaName, selectedAnswerFilterFunction, indFunc, inMemoryFilter);
     }
 
-    filterForFixedWidgetType(latestEncounters, schemaName, selectedAnswerFilters, indFunc, inMemoryFilter) {
+    filterForNonRangeWidgetType(latestEncounters, schemaName, selectedAnswerFiltersFunction, indFunc, inMemoryFilter) {
         //cannot append next filtered to this query because sorting happens at the end of query and we will not get expected result.
         //so we get the most recent encounters from above query and pass it down to the next query.
         if (_.isEmpty(latestEncounters)) return [];
-        let encountersBasedOnSelectedAnswers = latestEncounters.filtered(` ${selectedAnswerFilters()} `);
+        let encountersBasedOnSelectedAnswers = latestEncounters.filtered(` ${selectedAnswerFiltersFunction()} `);
         if (!_.isNil(inMemoryFilter)) {
             General.logDebug("CustomFilterService", "Running in memory filter");
             encountersBasedOnSelectedAnswers = encountersBasedOnSelectedAnswers.filterInternal((obsHolder) => inMemoryFilter(obsHolder))
@@ -145,8 +157,8 @@ class CustomFilterService extends BaseService {
         return encountersBasedOnSelectedAnswers.map(indFunc);
     }
 
-    filterForRangeWidgetType(latestEntities, selectedAnswerFilters, indFunc) {
-        return _.filter(latestEntities, pe => _.some(pe.observations, obs => selectedAnswerFilters(obs)))
+    filterForRangeWidgetType(latestEntities, selectedAnswerFilterFunction, indFunc) {
+        return _.filter(latestEntities, pe => _.some(pe.observations, obs => selectedAnswerFilterFunction(obs)))
             .map(indFunc);
     }
 
@@ -154,17 +166,18 @@ class CustomFilterService extends BaseService {
         return [_.isEmpty(encounterOptions) ? '' : `( ${encounterOptions} )`, _.isEmpty(programOptions) ? '' : `( ${programOptions} )`].filter(Boolean).join(" AND ");
     }
 
-    getFilterQueryByType({type, conceptUUID, widget}, selectedOptions) {
+    //Delete with MyDashboard
+    getFilterQueryByTypeFunction({type, conceptUUID, widget}, selectedOptions) {
         if (type === CustomFilter.type.Concept) {
             const conceptService = this.getService(ConceptService);
             const concept = conceptService.getConceptByUUID(conceptUUID);
-            return this.getConceptFilterQuery(concept, selectedOptions, widget)
+            return this.getConceptFilterQueryFunction(concept, selectedOptions, widget)
         } else if (type === CustomFilter.type.RegistrationDate) {
-            return this.otherDateFilter(selectedOptions, widget, 'registrationDate');
+            return RealmQueryService.getDateFilterFunctionV1(selectedOptions, widget, 'registrationDate');
         } else if (type === CustomFilter.type.EnrolmentDate) {
-            return this.otherDateFilter(selectedOptions, widget, 'enrolmentDateTime');
+            return RealmQueryService.getDateFilterFunctionV1(selectedOptions, widget, 'enrolmentDateTime');
         } else if (type === CustomFilter.type.ProgramEncounterDate || type === CustomFilter.type.EncounterDate) {
-            return this.otherDateFilter(selectedOptions, widget, 'encounterDateTime');
+            return RealmQueryService.getDateFilterFunctionV1(selectedOptions, widget, 'encounterDateTime');
         } else if (type === CustomFilter.type.GroupSubject) {
             return this.groupSubjectQuery.bind(this, selectedOptions);
         } else {
@@ -172,24 +185,29 @@ class CustomFilterService extends BaseService {
         }
     }
 
+    getFilterQueryByTypeFunctionV2({type, conceptUUID, widget}, filterValue) {
+        if (type === CustomFilter.type.Concept) {
+            const conceptService = this.getService(ConceptService);
+            const concept = conceptService.getConceptByUUID(conceptUUID);
+            return this.getConceptFilterQueryFunctionV2(concept, filterValue, widget)
+        } else if (type === CustomFilter.type.RegistrationDate) {
+            return getDateFilterFunction(filterValue, widget, 'registrationDate');
+        } else if (type === CustomFilter.type.EnrolmentDate) {
+            return getDateFilterFunction(filterValue, widget, 'enrolmentDateTime');
+        } else if (type === CustomFilter.type.ProgramEncounterDate || type === CustomFilter.type.EncounterDate) {
+            return getDateFilterFunction(filterValue, widget, 'encounterDateTime');
+        } else if (type === CustomFilter.type.GroupSubject) {
+            return this.groupSubjectQuery.bind(this, filterValue);
+        } else {
+            return RealmQueryService.getMatchAllEntitiesQuery;
+        }
+    }
+
     groupSubjectQuery(selectedOptions) {
         return _.map(selectedOptions, ({groupSubjectUUID}) => ` (voided = false AND groupSubject.uuid = '${groupSubjectUUID}') `).join(" OR ");
     }
 
-    otherDateFilter(selectedOptions, widget, queryColumn) {
-        const {minValue, maxValue} = _.head(selectedOptions);
-        const realmFormatDate = (value, time) => {
-            const date = value || moment().format("YYYY-MM-DDTHH:mm:ss");
-            return date.split('T')[0] + time;
-        };
-        if (widget === CustomFilter.widget.Range) {
-            return () => ` ${queryColumn} >= ${realmFormatDate(minValue, '@00:00:00')} &&  ${queryColumn} <= ${realmFormatDate(maxValue, '@23:59:59')} `;
-        } else {
-            return () => ` ${queryColumn} == ${realmFormatDate(minValue, '@00:00:00')} `;
-        }
-    }
-
-    getConceptFilterQuery(concept, selectedOptions, widget) {
+    getConceptFilterQueryFunction(concept, selectedOptions, widget) {
         const selectedOption = _.head(selectedOptions);
         switch (concept.datatype) {
             case (Concept.dataType.Coded) :
@@ -227,6 +245,49 @@ class CustomFilterService extends BaseService {
         }
     }
 
+    getConceptFilterQueryFunctionV2(concept, filterValue, widget) {
+        switch (concept.datatype) {
+            case (Concept.dataType.Coded) :
+                const codedFilterQuery = _.map(filterValue, c => ` (observations.concept.uuid == '${concept.uuid}' AND  observations.valueJSON CONTAINS[c] '${c.uuid}') `).join(" OR ");
+                return () => codedFilterQuery;
+            case (Concept.dataType.Text) :
+            case (Concept.dataType.Notes) :
+            case (Concept.dataType.Id) :
+                const textFilterQuery = ` (concept.uuid == '${concept.uuid}' AND  ${this.tokenizedNameQuery(filterValue.name)}) `;
+                return () => this.getObsSubQueryForQuery(textFilterQuery);
+            case (Concept.dataType.Numeric) :
+                if (widget === CustomFilter.widget.Range) {
+                    return (obs) => obs.concept.uuid === concept.uuid && obs.getValue() >= filterValue.minValue && obs.getValue() <= filterValue.maxValue;
+                } else {
+                    const numericFilterQuery = ` (concept.uuid == '${concept.uuid}' AND valueJSON CONTAINS[c] '"answer":${filterValue}') `;
+                    return () => this.getObsSubQueryForQuery(numericFilterQuery);
+                }
+            case (Concept.dataType.Date) :
+                if (widget === CustomFilter.widget.Range) {
+                    return (obs) => obs.concept.uuid === concept.uuid && moment(obs.getValue()).isBetween(filterValue.minValue, filterValue.maxValue, null, []);
+                } else {
+                    const dateFilterQuery = ` (concept.uuid == '${concept.uuid}' AND valueJSON CONTAINS[c] '"answer":"${RealmQueryService.getDateForStringLikeMatching(filterValue)}') `;
+                    return () => this.getObsSubQueryForQuery(dateFilterQuery);
+                }
+            case (Concept.dataType.DateTime):
+                if (widget === CustomFilter.widget.Range) {
+                    return (obs) => obs.concept.uuid === concept.uuid && moment(obs.getValue()).isBetween(filterValue.minValue, filterValue.maxValue, null, []);
+                } else {
+                    const dateFilterQuery = ` (concept.uuid == '${concept.uuid}' AND valueJSON CONTAINS[c] '"answer":"${RealmQueryService.getDateTimeForStringLikeMatching(filterValue)}') `;
+                    return () => this.getObsSubQueryForQuery(dateFilterQuery);
+                }
+            case (Concept.dataType.Time):
+                if (widget === CustomFilter.widget.Range) {
+                    return (obs) => obs.concept.uuid === concept.uuid && moment(obs.getValue(), 'H:mma').isBetween(moment(filterValue.minValue, 'h:mma'), moment(filterValue.maxValue, 'h:mma'), null, []);
+                } else {
+                    const timeFilterQuery = ` (concept.uuid == '${concept.uuid}' AND  valueJSON CONTAINS[c] '${filterValue}') `;
+                    return () => this.getObsSubQueryForQuery(timeFilterQuery);
+                }
+            default:
+                return () => 'uuid != null';
+        }
+    }
+
     getObsSubQueryForQuery(query) {
         return `SUBQUERY(observations, $concept, ${query} ).@count > 0`;
     }
@@ -242,7 +303,7 @@ class CustomFilterService extends BaseService {
         return filter.join(" AND ");
     }
 
-    queryConceptTypeFilters(scope, scopeParameters, selectedAnswerFilters, conceptFilter, widget, inMemoryFilter, includeVoided) {
+    queryConceptTypeFilters(scope, scopeParameters, selectedAnswerFilterFunction, conceptFilter, widget, inMemoryFilter, includeVoided) {
         switch (scope) {
             case CustomFilter.scope.ProgramEncounter : {
                 const encounterOptions = _.map(scopeParameters.encounterTypeUUIDs, e => `encounterType.uuid == "${e}"`).join(" OR ");
@@ -250,80 +311,66 @@ class CustomFilterService extends BaseService {
                 const scopeFilters = this.createProgramEncounterScopeFilter(encounterOptions, programOptions);
                 const scopeFiltersWithNonExit = `(${scopeFilters}) and programEnrolment.programExitDateTime = null`;
                 const sortFilter = 'TRUEPREDICATE sort(programEnrolment.individual.uuid asc , encounterDateTime desc) Distinct(programEnrolment.individual.uuid)';
-                const individualUUIDs = this.queryFromLatestObservation(ProgramEncounter.schema.name, conceptFilter, selectedAnswerFilters, scopeFiltersWithNonExit, sortFilter, enc => enc.programEnrolment.individual.uuid, widget, inMemoryFilter, includeVoided);
-                this.updateIndividuals(individualUUIDs);
-                break;
+                return this.queryFromLatestObservation(ProgramEncounter.schema.name, conceptFilter, selectedAnswerFilterFunction, scopeFiltersWithNonExit, sortFilter, enc => enc.programEnrolment.individual.uuid, widget, inMemoryFilter, includeVoided);
             }
             case CustomFilter.scope.ProgramEnrolment : {
                 const programOptions = _.map(scopeParameters.programUUIDs, p => `program.uuid == "${p}"`).join(" OR ");
                 const scopeFilters = this.createProgramEncounterScopeFilter(null, programOptions);
                 const scopeFiltersWithNonExit = `(${scopeFilters}) and programExitDateTime = null`;
                 const sortFilter = 'TRUEPREDICATE sort(individual.uuid asc , enrolmentDateTime desc) Distinct(individual.uuid)';
-                const individualUUIDs = this.queryFromLatestObservation(ProgramEnrolment.schema.name, conceptFilter, selectedAnswerFilters, scopeFiltersWithNonExit, sortFilter, enl => enl.individual.uuid, widget, inMemoryFilter, includeVoided);
-                this.updateIndividuals(individualUUIDs);
-                break;
+                return this.queryFromLatestObservation(ProgramEnrolment.schema.name, conceptFilter, selectedAnswerFilterFunction, scopeFiltersWithNonExit, sortFilter, enl => enl.individual.uuid, widget, inMemoryFilter, includeVoided);
             }
             case CustomFilter.scope.Registration : {
-                const individualUUIDs = this.queryFromLatestObservation(Individual.schema.name, null, selectedAnswerFilters, null, null, ind => ind.uuid, widget, inMemoryFilter, includeVoided);
-                this.updateIndividuals(individualUUIDs);
-                break;
+                return this.queryFromLatestObservation(Individual.schema.name, null, selectedAnswerFilterFunction, null, null, ind => ind.uuid, widget, inMemoryFilter, includeVoided);
             }
             case CustomFilter.scope.Encounter : {
                 const encounterOptions = _.map(scopeParameters.encounterTypeUUIDs, e => `encounterType.uuid == "${e}"`).join(" OR ");
                 const scopeFilters = this.createProgramEncounterScopeFilter(encounterOptions, null);
                 const sortFilter = 'TRUEPREDICATE sort(individual.uuid asc , encounterDateTime desc) Distinct(individual.uuid)';
-                const individualUUIDs = this.queryFromLatestObservation(Encounter.schema.name, conceptFilter, selectedAnswerFilters, scopeFilters, sortFilter, enc => enc.individual.uuid, widget, inMemoryFilter, includeVoided);
-                this.updateIndividuals(individualUUIDs);
-                break;
+                return this.queryFromLatestObservation(Encounter.schema.name, conceptFilter, selectedAnswerFilterFunction, scopeFilters, sortFilter, enc => enc.individual.uuid, widget, inMemoryFilter, includeVoided);
             }
             default :
-                General.logDebug("Scope not found")
+                General.logDebug("Scope not found");
+                return [];
         }
     }
 
-    updateIndividuals(individualUUIDs) {
-        this.individualUUIDs = _.isNil(this.individualUUIDs) ? individualUUIDs : _.intersection(this.individualUUIDs, individualUUIDs);
+    getSubjects(conceptUUID, selectedOptions, type, scope, scopeParameters, widget, queryFunction, includeVoided = false) {
+        switch (type) {
+            case CustomFilter.type.Concept :
+                const concept = this.getService(ConceptService).findByUUID(conceptUUID);
+                const inMemoryFilter = concept.isCodedConcept() ?
+                    (obsHolder) => ObservationsHolder.hasAnyAnswer(obsHolder, conceptUUID, selectedOptions.map(x => x.uuid),) : null;
+                const conceptFilter = `observations.concept.uuid == "${conceptUUID}"`;
+                return this.queryConceptTypeFilters(scope, scopeParameters, queryFunction, conceptFilter, widget, inMemoryFilter, includeVoided);
+            case CustomFilter.type.RegistrationDate:
+                return this.queryEntity(Individual.schema.name, queryFunction, null, ind => ind.uuid, includeVoided);
+            case CustomFilter.type.EnrolmentDate:
+                const otherEnrolmentFilters = `individual.voided = false and programExitDateTime = null`;
+                return this.queryEntity(ProgramEnrolment.schema.name, queryFunction, otherEnrolmentFilters, enl => enl.individual.uuid, includeVoided);
+            case CustomFilter.type.ProgramEncounterDate:
+                const otherProgramEncounterFilters = `programEnrolment.individual.voided = false and programEnrolment.programExitDateTime = null and programEnrolment.voided = false`;
+                return this.queryEntity(ProgramEncounter.schema.name, queryFunction, otherProgramEncounterFilters, enc => enc.programEnrolment.individual.uuid, includeVoided);
+            case CustomFilter.type.EncounterDate:
+                const otherEncounterFilters = `individual.voided = false`;
+                return this.queryEntity(Encounter.schema.name, queryFunction, otherEncounterFilters, enc => enc.individual.uuid, includeVoided);
+            case CustomFilter.type.GroupSubject:
+                return this.queryEntity(GroupSubject.schema.name, queryFunction, null, gs => gs.memberSubject.uuid, includeVoided);
+            default :
+                General.logDebug("Filter type not found");
+                return [];
+        }
     }
 
     applyCustomFilters(customFilters, filterName, includeVoided = false) {
-        this.individualUUIDs = null;
+        let uniqueSubjectUUIDs = [];
         _.forEach(this.getSettings()[filterName], filter => {
             const selectedOptions = customFilters[filter.titleKey];
-            if (!_.isEmpty(selectedOptions)) {
-                const {scopeParameters, scope, conceptUUID, type, widget} = filter;
-                const selectedAnswerFilterQuery = this.getFilterQueryByType(filter, selectedOptions);
-                const conceptFilter = `observations.concept.uuid == "${conceptUUID}"`;
-                switch (type) {
-                    case CustomFilter.type.Concept :
-                        const concept = this.getService(ConceptService).findByUUID(conceptUUID);
-                        const inMemoryFilter = concept.isCodedConcept() ?
-                            (obsHolder) => ObservationsHolder.hasAnyAnswer(obsHolder, conceptUUID, selectedOptions.map(x => x.uuid),) : null;
-                        this.queryConceptTypeFilters(scope, scopeParameters, selectedAnswerFilterQuery, conceptFilter, widget, inMemoryFilter, includeVoided);
-                        break;
-                    case CustomFilter.type.RegistrationDate:
-                        this.updateIndividuals(this.queryEntity(Individual.schema.name, selectedAnswerFilterQuery, null, ind => ind.uuid, includeVoided));
-                        break;
-                    case CustomFilter.type.EnrolmentDate:
-                        const otherEnrolmentFilters = `individual.voided = false and programExitDateTime = null`;
-                        this.updateIndividuals(this.queryEntity(ProgramEnrolment.schema.name, selectedAnswerFilterQuery, otherEnrolmentFilters, enl => enl.individual.uuid, includeVoided));
-                        break;
-                    case CustomFilter.type.ProgramEncounterDate:
-                        const otherProgramEncounterFilters = `programEnrolment.individual.voided = false and programEnrolment.programExitDateTime = null and programEnrolment.voided = false`;
-                        this.updateIndividuals(this.queryEntity(ProgramEncounter.schema.name, selectedAnswerFilterQuery, otherProgramEncounterFilters, enc => enc.programEnrolment.individual.uuid, includeVoided));
-                        break;
-                    case CustomFilter.type.EncounterDate:
-                        const otherEncounterFilters = `individual.voided = false`;
-                        this.updateIndividuals(this.queryEntity(Encounter.schema.name, selectedAnswerFilterQuery, otherEncounterFilters, enc => enc.individual.uuid, includeVoided));
-                        break;
-                    case CustomFilter.type.GroupSubject:
-                        this.updateIndividuals(this.queryEntity(GroupSubject.schema.name, selectedAnswerFilterQuery, null, gs => gs.memberSubject.uuid, includeVoided));
-                        break;
-                    default :
-                        General.logDebug("Filter type not found")
-                }
-            }
+            const {scopeParameters, scope, conceptUUID, type, widget} = filter;
+            const selectedAnswerFilterQueryFunction = this.getFilterQueryByTypeFunction(filter, selectedOptions);
+            uniqueSubjectUUIDs = _.intersection(uniqueSubjectUUIDs, this.getSubjects(conceptUUID, selectedOptions, type, scope, scopeParameters, widget, selectedAnswerFilterQueryFunction, includeVoided));
         });
-        return this.individualUUIDs;
+        return uniqueSubjectUUIDs;
     }
 }
 

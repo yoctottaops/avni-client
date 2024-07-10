@@ -13,6 +13,17 @@ class AddressLevelService extends BaseAddressLevelService {
         return AddressLevel.schema.name;
     }
 
+    getAllDisplayAddresses(selectedAddresses) {
+        let allDisplayAddresses = this.findAll(this.getSchema())
+            .filtered('voided = false and parentUuid == null').map(_.identity);
+        const sortedAddresses = _.orderBy(selectedAddresses, 'level', 'desc');
+        const thisService = this;
+        sortedAddresses.forEach(selectedAddress => {
+            allDisplayAddresses = allDisplayAddresses.concat(thisService.getChildren(selectedAddress.uuid));
+        });
+        return allDisplayAddresses;
+    }
+
     getAllDescendants(addresses) {
         const addressLevelService = this;
         return addresses

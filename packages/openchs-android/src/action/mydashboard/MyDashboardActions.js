@@ -10,6 +10,8 @@ import {firebaseEvents, logEvent} from "../../utility/Analytics";
 import RealmQueryService from "../../service/query/RealmQueryService";
 import SubjectTypeService from "../../service/SubjectTypeService";
 import {DashboardCacheFilter} from "openchs-models";
+import General from "../../utility/General";
+import {JSONStringify} from "../../utility/JsonStringify";
 
 function getApplicableEncounterTypes(holder) {
     return _.isEmpty(holder.selectedGeneralEncounterTypes) ? holder.selectedEncounterTypes : holder.selectedGeneralEncounterTypes;
@@ -34,11 +36,11 @@ function updateCacheWithPostSyncValues(context) {
     if (oneSyncCompleted) {
         const subjectTypeQuery = (path) => [`${path} = "${subjectTypes[0].uuid}"`];
         toUpdateValues = {
-            individualFilters: subjectTypeQuery('subjectType.uuid'),
-            encountersFilters: subjectTypeQuery('programEnrolment.individual.subjectType.uuid'),
-            enrolmentFilters: subjectTypeQuery('individual.subjectType.uuid'),
-            generalEncountersFilters: subjectTypeQuery('individual.subjectType.uuid'),
-            dueChecklistFilter: subjectTypeQuery('individual.subjectType.uuid'),
+            individualFilters: RealmQueryService.orQuery(subjectTypeQuery('subjectType.uuid')),
+            encountersFilters: RealmQueryService.orQuery(subjectTypeQuery('programEnrolment.individual.subjectType.uuid')),
+            enrolmentFilters: RealmQueryService.orQuery(subjectTypeQuery('individual.subjectType.uuid')),
+            generalEncountersFilters: RealmQueryService.orQuery(subjectTypeQuery('individual.subjectType.uuid')),
+            dueChecklistFilter: RealmQueryService.orQuery(subjectTypeQuery('individual.subjectType.uuid')),
             selectedSubjectTypeUUID: subjectTypes[0].uuid,
             ...toUpdateValues
         };
@@ -103,9 +105,9 @@ class MyDashboardActions {
             showFilters: false,
             filters: new Map(),
             locationSearchCriteria: IndividualSearchCriteria.empty(),
-            individualFilters: [],
-            encountersFilters: [],
-            generalEncountersFilters: [],
+            individualFilters: '',
+            encountersFilters: '',
+            generalEncountersFilters: '',
             enrolmentFilters: [],
             dueChecklistFilter: [],
             selectedLocations: [],
@@ -156,7 +158,7 @@ class MyDashboardActions {
                 MyDashboardActions.commonIndividuals(individualService.allOverdueVisitsIn(dashboardCacheFilter.filterDate, [], dashboardCacheFilter.encountersFilters, dashboardCacheFilter.generalEncountersFilters, queryProgramEncounter, queryGeneralEncounter), state.individualUUIDs),
                 MyDashboardActions.commonIndividuals(individualService.recentlyCompletedVisitsIn(dashboardCacheFilter.filterDate, [], dashboardCacheFilter.encountersFilters, dashboardCacheFilter.generalEncountersFilters, queryProgramEncounter, queryGeneralEncounter), state.individualUUIDs),
                 MyDashboardActions.commonIndividuals(individualService.recentlyRegistered(dashboardCacheFilter.filterDate, [], dashboardCacheFilter.individualFilters, dashboardCacheFilter.selectedPrograms, getApplicableEncounterTypes(dashboardCacheFilter)), state.individualUUIDs),
-                MyDashboardActions.commonIndividuals(individualService.recentlyEnrolled(dashboardCacheFilter.filterDate, [], dashboardCacheFilter.enrolmentFilters), state.individualUUIDs),
+                MyDashboardActions.commonIndividuals(individualService.recentlyEnrolled(dashboardCacheFilter.filterDate), state.individualUUIDs),
                 MyDashboardActions.commonIndividuals(individualService.allInWithFilters(dashboardCacheFilter.filterDate, [], dashboardCacheFilter.individualFilters, dashboardCacheFilter.selectedPrograms, getApplicableEncounterTypes(dashboardCacheFilter)), state.individualUUIDs, true),
                 MyDashboardActions.commonIndividuals(dueChecklistWithChecklistItem.individual, state.individualUUIDs)
             ]
@@ -215,21 +217,25 @@ class MyDashboardActions {
         const methodMap = new Map([
             ["scheduled", individualService.allScheduledVisitsIn],
             ["overdue", individualService.allOverdueVisitsIn],
-            ["recentlyCompletedVisits", individualService.recentlyCompletedVisitsIn],
             ["recentlyCompletedRegistration", individualService.recentlyRegistered],
-            ["recentlyCompletedEnrolment", individualService.recentlyEnrolled],
-            ["total", individualService.allIn],
-            ["dueChecklist", individualService.dueChecklistForDefaultDashboard]
+            ["total", individualService.allIn]
         ]);
         const filters = listType === 'recentlyCompletedEnrolment' ? state.enrolmentFilters :
             (listType === 'total' || listType === 'recentlyCompletedRegistration' || listType === "dueChecklist") ? state.individualFilters : state.encountersFilters;
         const queryProgramEncounter = MyDashboardActions.shouldQueryProgramEncounter(state);
         const queryGeneralEncounter = MyDashboardActions.shouldQueryGeneralEncounter(state);
+
         let allIndividuals;
         if (listType === "recentlyCompletedRegistration" || listType === "total")
             allIndividuals = methodMap.get(listType)(state.date.value, [], filters, state.selectedPrograms, getApplicableEncounterTypes(state));
         else if (listType === "dueChecklist") {
-            allIndividuals = methodMap.get(listType)(state.date.value, [], state.dueChecklistFilter)
+            allIndividuals = individualService.dueChecklistForDefaultDashboard(state.date.value, [], filters, state.selectedPrograms, getApplicableEncounterTypes(state), queryProgramEncounter, queryGeneralEncounter);
+        } else if (["scheduled", "overdue"].includes(listType)) {
+            allIndividuals = methodMap.get(listType)(state.date.value, [], state.encountersFilters, state.generalEncountersFilters, queryProgramEncounter, queryGeneralEncounter);
+        } else if (["recentlyCompletedEnrolment"].includes(listType)) {
+            allIndividuals = individualService.recentlyEnrolled(listType)(state.date.value);
+        } else if (["recentlyCompletedVisits"].includes(listType)) {
+            allIndividuals = individualService.recentlyCompletedVisitsIn(state.date.value, [], state.encountersFilters, state.generalEncountersFilters, queryProgramEncounter, queryGeneralEncounter);
         } else
             allIndividuals = methodMap.get(listType)(state.date.value, [], filters, state.generalEncountersFilters, queryProgramEncounter, queryGeneralEncounter);
 
@@ -360,13 +366,20 @@ class MyDashboardActions {
         ].filter(Boolean).join(" AND ");
 
         const transformedSelectedLocations = (action.selectedLocations && !_.isNil(action.selectedLocations)) ? action.selectedLocations.map(({
-              uuid,
-              name,
-              level,
-              type,
-              isSelected,
-              parentUuid
-          }) => ({uuid, name, level, type, parentUuid, isSelected})) : [];
+                                                                                                                                                  uuid,
+                                                                                                                                                  name,
+                                                                                                                                                  level,
+                                                                                                                                                  type,
+                                                                                                                                                  isSelected,
+                                                                                                                                                  parentUuid
+                                                                                                                                              }) => ({
+            uuid,
+            name,
+            level,
+            type,
+            parentUuid,
+            isSelected
+        })) : [];
         const newState = {
             ...state,
             filters: newFilters,

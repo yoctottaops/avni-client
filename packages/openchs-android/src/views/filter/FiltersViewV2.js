@@ -16,7 +16,7 @@ import CustomActivityIndicator from "../CustomActivityIndicator";
 import {ScrollView} from "native-base";
 import PropTypes from "prop-types";
 import ObservationBasedFilterView, {FilterContainer, FilterContainerWithLabel} from "./ObservationBasedFilterView";
-import {CustomFilter} from 'openchs-models';
+import {CustomFilter, Locations} from 'openchs-models';
 import DatePicker from "../primitives/DatePicker";
 import _ from "lodash";
 import SelectableItemGroup from "../primitives/SelectableItemGroup";
@@ -26,6 +26,9 @@ import IndividualService from "../../service/IndividualService";
 import DateRangeFilter from "./DateRangeFilter";
 import TypedTransition from "../../framework/routing/TypedTransition";
 import AddressLevelState from '../../action/common/AddressLevelsState';
+import FormMetaDataSelect from "../common/formMetaData/FormMetaDataSelect";
+import AddressLevelService from "../../service/AddressLevelService";
+import NamedSelectableEntities from "../../model/NamedSelectableEntities";
 
 class GroupSubjectFilter extends AbstractComponent {
     constructor(props, context) {
@@ -38,7 +41,7 @@ class GroupSubjectFilter extends AbstractComponent {
     static propTypes = {
         filter: PropTypes.object.isRequired,
         filterConfig: PropTypes.object.isRequired,
-        selectedGroupSubjectUUIDs: PropTypes.array,
+        selectedGroupSubjects: PropTypes.array,
         onChange: PropTypes.func
     }
 
@@ -48,22 +51,26 @@ class GroupSubjectFilter extends AbstractComponent {
     }
 
     render() {
-        const {filter, selectedGroupSubjectUUIDs} = this.props;
+        const {filter, selectedGroupSubjects} = this.props;
         const {groupSubjects} = this.state;
 
         if (groupSubjects.length === 0) return null;
 
+        const namedSelectableEntities = NamedSelectableEntities.create(groupSubjects);
         const labelValuePairs = groupSubjects.map((x) => new RadioLabelValue(`${x.nameString} (${x.lowestAddressLevel.translatedFieldValue})`, x.uuid));
-
         const currentLocale = this.getService(UserInfoService).getUserSettings().locale;
+
         return <FilterContainer>
             <SelectableItemGroup
                 locale={currentLocale}
                 I18n={this.I18n}
                 multiSelect={true}
                 inPairs={true}
-                onPress={(value) => this.props.onChange(value)}
-                selectionFn={(groupSubjectUUID) => _.includes(selectedGroupSubjectUUIDs, groupSubjectUUID)}
+                onPress={(value) => {
+                    const updatedSelectedEntities = namedSelectableEntities.toggle(selectedGroupSubjects, value, true);
+                    this.props.onChange(updatedSelectedEntities);
+                }}
+                selectionFn={(groupSubjectUUID) => _.some(selectedGroupSubjects, (x) => x.uuid === groupSubjectUUID)}
                 labelKey={filter.name}
                 labelValuePairs={labelValuePairs}/>
         </FilterContainer>;
@@ -126,12 +133,7 @@ class FiltersViewV2 extends AbstractComponent {
                 setTimeout(() => {
                     this.props.onFilterChosen(ruleInput);
                 }, 100);
-            },
-            setFiltersDataOnDashboardView: (customDashboardFilters) => {
-                setTimeout(() => {
-                    this.props.loadFiltersData(customDashboardFilters);
-                }, 100);
-            },
+            }
         });
     }
 
@@ -149,6 +151,7 @@ class FiltersViewV2 extends AbstractComponent {
         const {width} = Dimensions.get('window');
 
         const {loading, filterConfigs, filters, selectedValues, filterErrors} = this.state;
+        const addressLevelService = this.getService(AddressLevelService);
 
         return (
             <CHSContainer style={{backgroundColor: Styles.whiteColor, display: "flex", flexDirection: "column", paddingBottom: 50}}>
@@ -170,19 +173,13 @@ class FiltersViewV2 extends AbstractComponent {
                                                              deprecatedUsage={false}
                                                              onSelect={(gender) => this.dispatchFilterUpdate(filter, gender)}/>;
                                     case CustomFilter.type.Address:
-                                        const selectedAddressesInfo = _.flatten([...new Map(filterValue?.levels).values()])
-                                          .map(({uuid, name, level, type, isSelected, parentUuid}) => ({
-                                              uuid,
-                                              name,
-                                              level,
-                                              type,
-                                              parentUuid,
-                                              isSelected
-                                          }));
-                                        return <AddressLevels addressLevelState={new AddressLevelState(selectedAddressesInfo)}
+                                        const userVisibleAddresses = addressLevelService.getAllDisplayAddresses(filterValue);
+                                        let addressLevelState = new AddressLevelState(userVisibleAddresses);
+                                        addressLevelState.setSelectedAddresses(filterValue);
+                                        return <AddressLevels addressLevelState={addressLevelState}
                                                               fieldLabel={this.I18n.t(filter.name)}
                                                               key={index}
-                                                              onSelect={(updatedAddressLevelState) => this.dispatchFilterUpdate(filter, updatedAddressLevelState)}
+                                                              onSelect={(updatedAddressLevelState) => this.dispatchFilterUpdate(filter, updatedAddressLevelState.selectedAddresses)}
                                                               multiSelect={true}
                                                               userHintText={this.I18n.t('addressFilterImplicitBehaviorHint')}/>;
                                     case CustomFilter.type.RegistrationDate:
@@ -190,14 +187,23 @@ class FiltersViewV2 extends AbstractComponent {
                                     case CustomFilter.type.ProgramEncounterDate:
                                     case CustomFilter.type.EncounterDate:
                                         return <FilterContainerWithLabel filter={filter} key={index}>
-                                            {filterConfig.widget === CustomFilter.widget.Range ?
-                                                <DateRangeFilter pickTime={false} maxValue={_.get(filterValue, "maxValue")} minValue={_.get(filterValue, "minValue")}
+                                            {filterConfig.isRangeWidget() ?
+                                                <DateRangeFilter pickTime={false} maxValue={filterValue.maxValue} minValue={filterValue.minValue}
                                                                  onChange={(x) => this.dispatchFilterUpdate(filter, x)} errorMessage={filterError}/>
                                                 :
                                                 <DatePicker pickTime={false} dateValue={filterValue} onChange={(value) => this.dispatchFilterUpdate(filter, value)}/>}
                                         </FilterContainerWithLabel>;
+                                    case CustomFilter.type.AsOnDate:
+                                        return <FilterContainerWithLabel filter={filter} key={index}>
+                                            <DatePicker pickTime={false} dateValue={filterValue} onChange={(value) => this.dispatchFilterUpdate(filter, value)}/>
+                                        </FilterContainerWithLabel>;
                                     case CustomFilter.type.GroupSubject:
-                                        return <GroupSubjectFilter filter={filter} filterConfig={filterConfig} selectedGroupSubjectUUIDs={filterValue} key={index}
+                                        return <GroupSubjectFilter filter={filter} filterConfig={filterConfig}
+                                                                   selectedGroupSubjects={filterValue} key={index}
+                                                                   onChange={(newGroupSubjects) => this.dispatchFilterUpdate(filter, newGroupSubjects)}/>;
+                                    case CustomFilter.type.SubjectType:
+                                        return <FormMetaDataSelect isMulti={true} key={index}
+                                                                   formMetaDataSelections={filterValue}
                                                                    onChange={(x) => this.dispatchFilterUpdate(filter, x)}/>;
                                     default:
                                         return <ObservationBasedFilterView onChange={(x) => this.dispatchFilterUpdate(filter, x)} key={index}

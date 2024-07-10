@@ -21,27 +21,6 @@ class DashboardCacheService extends BaseService {
         return this.findOnly();
     }
 
-    hasCache() {
-        return !_.isNil(this.findOnly());
-    }
-
-    static getFilterJSONFromState(state) {
-        return {
-            date: state.date,
-            selectedPrograms: state.selectedPrograms,
-            selectedEncounterTypes: state.selectedEncounterTypes,
-            selectedGeneralEncounterTypes: state.selectedGeneralEncounterTypes,
-            selectedCustomFilters: state.selectedCustomFilters,
-            selectedGenders: state.selectedGenders,
-            programs: state.programs,
-            individualFilters: state.individualFilters,
-            encountersFilters: state.encountersFilters,
-            enrolmentFilters: state.enrolmentFilters,
-            generalEncountersFilters: state.generalEncountersFilters,
-            selectedSubjectTypeUUID: state.subjectType.uuid
-        };
-    }
-
     updateCard(card) {
         this.db.write(() => {
             const dashboardCache = this.getCache();
@@ -60,7 +39,8 @@ class DashboardCacheService extends BaseService {
         const db = this.db;
         this.db.write(() => {
             const dashboardCache = this.findOnly();
-            db.delete(dashboardCache);
+            if (!_.isNil(dashboardCache))
+                db.delete(dashboardCache);
         });
     }
 }
