@@ -18,6 +18,15 @@ import moment from "moment";
 import AvniErrorBoundary from "./framework/errorHandling/AvniErrorBoundary";
 import UnhandledErrorView from "./framework/errorHandling/UnhandledErrorView";
 import ErrorUtil from "./framework/errorHandling/ErrorUtil";
+import { connectToDevTools } from "react-devtools-core";
+
+
+if (__DEV__) {
+  connectToDevTools({
+    host: "192.168.31.118",
+    port: 8097,
+  });
+}
 
 const {TamperCheckModule} = NativeModules;
 
