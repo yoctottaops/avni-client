@@ -59,6 +59,7 @@ class SettingsActions {
     }
 
     static onServerURLChange(state, action, context) {
+        console.log('SettingsActions.onServerURLChange');
         return SettingsActions._updateSettingAndSave(state, (settings) => {
             settings.serverURL = action.value
         }, context, true);

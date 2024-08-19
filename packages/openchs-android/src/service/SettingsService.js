@@ -13,6 +13,7 @@ import RNRestart from 'react-native-restart';
 @Service("settingsService")
 class SettingsService extends BaseService {
     static IncrementalEncounterDisplayCount = 3;
+    settingId = Math.random().toString(36).substring(7);
 
     constructor(db, beanStore) {
         super(db, beanStore);
@@ -60,6 +61,7 @@ class SettingsService extends BaseService {
     }
 
     getSettings() {
+        console.log("SettingsService", "getSettings", Settings.schema.name, this.settingId);
         const settings = this.findAll(Settings.schema.name);
         if (settings === undefined || settings.length === 0) return undefined;
         return settings[0];

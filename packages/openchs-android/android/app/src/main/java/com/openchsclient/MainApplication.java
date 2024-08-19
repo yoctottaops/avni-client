@@ -33,6 +33,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.lang.ClassLoader;
 
+import android.content.BroadcastReceiver;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.Build;
+import org.jetbrains.annotations.Nullable;
+
 public class MainApplication extends Application implements ReactApplication {
 
     private final ReactNativeHost mReactNativeHost = new DefaultReactNativeHost(this) {
@@ -68,6 +74,17 @@ public class MainApplication extends Application implements ReactApplication {
             return BuildConfig.IS_HERMES_ENABLED;
         }
     };
+
+    // FIX for android 14 and above, fixes the One of RECEIVER_EXPORTED or RECEIVER_NOT_EXPORTED should be specified when a receiver isn't being registered exclusively for system broadcasts issue
+    // https://medium.com/@md.Azeem/reac-native-android-app-crash-after-upgrade-targetsdkversion-34-e521f0dd0e19
+    @Override
+    public Intent registerReceiver(@Nullable BroadcastReceiver receiver, IntentFilter filter) {
+        if (Build.VERSION.SDK_INT >= 34 && getApplicationInfo().targetSdkVersion >= 34) {
+            return super.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
+        } else {
+            return super.registerReceiver(receiver, filter);
+        }
+    }
 
     @Override
     public void onCreate() {

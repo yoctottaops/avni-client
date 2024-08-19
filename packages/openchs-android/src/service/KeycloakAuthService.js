@@ -20,6 +20,7 @@ class KeycloakAuthService extends BaseAuthProviderService {
         return await this.callKeycloak(requestBody)
             .then(response => response.json())
             .then(async result => {
+                console.log("KeycloakAuthService", "Authentication successful", result);
                 return await this.persistTokens(result);
             })
             .then(settings => {
@@ -47,6 +48,7 @@ class KeycloakAuthService extends BaseAuthProviderService {
             return new AuthenticationError(NO_USER, "No user or needs login");
         }
         if (this.isJWTTokenExpired(accessToken)) {
+            console.log("KeycloakAuthService", "Access token expired. Refreshing token", accessToken);
             const refreshedAccessToken = await this._refreshAccessToken().catch(null);
             if (!_.isNil(refreshedAccessToken)) return refreshedAccessToken;
         }
@@ -55,6 +57,7 @@ class KeycloakAuthService extends BaseAuthProviderService {
 
     async _refreshAccessToken() {
         const settings = this.getAuthSettings();
+        console.log("KeycloakAuthService", "setting : ", settings);
         const refreshToken = settings.refreshToken;
         const requestBody = {
             grant_type: 'refresh_token',
@@ -64,6 +67,7 @@ class KeycloakAuthService extends BaseAuthProviderService {
             return await this.callKeycloak(requestBody)
                 .then(response => response.json())
                 .then(result => {
+                    console.log("KeycloakAuthService", "Token refreshed", result);
                     this.persistTokens(result);
                     return result.access_token
                 })
